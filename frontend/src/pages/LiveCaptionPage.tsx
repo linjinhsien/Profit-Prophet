@@ -22,6 +22,7 @@ const CHUNK_MS = 100
 export function LiveCaptionPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
+  const [backendAvailable, setBackendAvailable] = useState<boolean | null>(null)
   const [status, setStatus] = useState('尚未開始')
   const [error, setError] = useState<string | undefined>()
   const [engine, setEngine] = useState('—')
@@ -45,12 +46,20 @@ export function LiveCaptionPage() {
 
   useEffect(() => {
     fetch('/api/config')
-      .then((r) => r.json())
-      .then((config) => {
-        setEngine(config.engine)
-        setRegion(config.region)
+      .then((r) => {
+        if (!r.ok) { setBackendAvailable(false); return }
+        return r.json()
       })
-      .catch(() => setError('讀不到後端設定，確認 LiveCaption backend 是否啟動'))
+      .then((config) => {
+        if (config) {
+          setEngine(config.engine)
+          setRegion(config.region)
+          setBackendAvailable(true)
+        }
+      })
+      .catch(() => {
+        setBackendAvailable(false)
+      })
   }, [])
 
   useEffect(() => {
@@ -206,6 +215,12 @@ export function LiveCaptionPage() {
       </header>
 
       <section className="mt-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+        {backendAvailable === false ? (
+          <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900">
+            <strong>即時字幕後端未連線。</strong> 此功能需要在本機啟動 LiveCaption backend（port 8000）。
+            其他頁面功能不受影響。
+          </div>
+        ) : null}
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-slate-600" htmlFor="lc-preset">情境</label>
@@ -260,7 +275,7 @@ export function LiveCaptionPage() {
           <div className="flex gap-2">
             <button
               className="rounded-xl bg-teal-700 px-5 py-3 font-semibold text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              disabled={isRecording || isConnecting}
+              disabled={isRecording || isConnecting || backendAvailable === false}
               onClick={() => void start()}
               type="button"
             >
