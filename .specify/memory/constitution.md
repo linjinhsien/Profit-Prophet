@@ -1,50 +1,55 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Profit-Prophet Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. AWS Account Security
+All AWS resources must follow least-privilege and restricted-access principles. No public-facing resources unless explicitly required and properly secured. Every team member must verify they are operating in the correct shared AWS account.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Region Compliance
+All resources and services must be deployed exclusively in **us-east-1 (N. Virginia)** or **us-west-2 (Oregon)**. If access denied errors occur, verify region selection first.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Data Protection (NON-NEGOTIABLE)
+No personal, regulated, financial, biometric, health, or payment data may be imported into the AWS account. No data related to race, ethnicity, political opinions, religion, trade union membership, sexual orientation, or genetic information. Only synthetic or non-sensitive data is permitted.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Resource Minimalism
+Only launch instances and resources strictly necessary for the project. Avoid unnecessary cost by limiting compute, storage, and service usage to active development needs.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Rate Limiting
+Amazon Bedrock and other generative AI service requests must stay below **1 Request Per Second (RPS/TPS)**. Only enable Bedrock models essential to the project — do not bulk-enable models without clear purpose.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Security Constraints
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### S3 Buckets
+- All S3 buckets MUST have public access blocked via S3 Block Public Access or a restrictive Bucket Policy
+- No unrestricted public bucket access is permitted
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### EC2 Instances
+- Security Groups must NOT be wide-open to public (0.0.0.0/0 on all ports)
+- Only open specific ports required for the application
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### RDS & EMR
+- Public Access must be **disabled** on all RDS instances and EMR clusters
+- Database access must be restricted to VPC-internal traffic or specific Security Groups
+
+### SageMaker
+- Do not duplicate metric definitions in `CreateTrainingJob` calls
+
+## Development Workflow
+
+### Environment Access
+1. Sign in via Workshop Studio with event access code
+2. Verify account number matches across all team members
+3. Access AWS via Console or CLI from the Workshop Studio menu
+4. Confirm region is us-east-1 or us-west-2 before any operation
+
+### Responsible Usage
+- Review all resource configurations before deployment
+- Clean up unused resources promptly
+- Monitor costs and resource utilization
+- Coordinate with teammates to avoid duplicate resources
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution reflects the Hackathon operator's mandatory rules and supersedes any conflicting development preferences. Violations may result in account access revocation. All team members must acknowledge and follow these constraints throughout the event.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-08-01 | **Last Amended**: 2026-08-01
