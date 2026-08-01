@@ -1,0 +1,12 @@
+# Amazon Transcribe Streaming 介面層需要的唯一依賴
+# （官方非同步 SDK，boto3 不支援即時串流辨識）
+amazon-transcribe==0.6.4
+
+# 後續 WebSocket 服務與 Bedrock 翻譯會用到，先一起鎖版本
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+boto3==1.35.90
+
+# 選用：只有 examples/transcribe_demo.py --mic 需要。
+# 正式產品的音訊來自瀏覽器，不需要這個。
+# pip install sounddevice==0.5.5
