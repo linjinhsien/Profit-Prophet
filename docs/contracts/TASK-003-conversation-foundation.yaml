@@ -1,0 +1,124 @@
+task:
+  id: "TASK-003"
+  title: "v2 多輪對話基礎層：型別、useConversation hook、conversations API v2"
+  issue: null                      # 建立 Issue 後填入實際編號
+  worktree: "feature-conversation-foundation"
+  assigned_to: null
+
+  input:
+    spec: "specs/004-voice-chat-care-record/tasks.md"
+    spec_tasks: ["T001", "T003", "T004", "T005", "T006"]
+    data_model: "specs/004-voice-chat-care-record/data-model.md"
+    architecture: "docs/architecture.md"      # v2 無後端架構，非板上 v1 圖
+    depends_on: []                            # 可與 TASK-002 / TASK-004 並行
+
+  output:
+    code:
+      - "frontend/src/types/conversation.ts"  # 新建
+      - "frontend/src/types/care.ts"          # 擴充
+      - "frontend/src/api/conversations.ts"   # 擴充為 v2 payload
+      - "frontend/src/lib/useConversation.ts" # 新建
+      - "frontend/src/lib/formatTime.ts"      # 新建
+    tests:
+      - "frontend/src/lib/formatTime.test.ts" # 純函式，最易測，作為測試框架首個實例
+    config: []
+
+  subtasks:
+    - id: "T1"
+      spec_task: "T001 + T003"
+      title: "型別定義：ChatMessage / Conversation / CareRecord / CareEventSummary"
+      detail: >
+        新型別放 types/conversation.ts；care.ts 只做必要擴充，維持既有
+        CareAnswer / ConversationRecord 不破壞現有 ChatPage 與 Dashboard 編譯。
+      blocks: ["T2", "T3"]
+    - id: "T2"
+      spec_task: "T004"
+      title: "conversations API 加 conversationId 與 v2 payload"
+      detail: >
+        需向後相容既有無 conversationId 的舊紀錄（讀取時視為單筆對話）。
+        加密流程沿用 conversationCrypto.ts，不得改動 PBKDF2 迭代數與 AES-GCM 參數。
+      blocks: ["T3"]
+    - id: "T3"
+      spec_task: "T005"
+      title: "useConversation hook：messages 陣列、sendMessage、resetConversation"
+      detail: >
+        每則 assistant 回應後自動加密寫入 DynamoDB（spec T015 的 auto-save
+        併入此處實作，避免 ChatPage 重工）。
+    - id: "T4"
+      spec_task: "T006"
+      title: "formatTime 相對時間工具"
+      detail: "「剛剛」「5 分鐘前」「昨天」；純函式，附單元測試。"
+    - id: "T5"
+      spec_task: null              # 非 spec 項，context-gather 新發現的既有 bug
+      title: "修正歷史查詢的分頁排序錯誤"
+      detail: >
+        conversations.ts:181 的 sort key 是 crypto.randomUUID()，但 line 217-218
+        用 ScanIndexForward: false + Limit: 50 取「最新 50 筆」。因為 sort key 是
+        隨機值而非時間，DynamoDB 回傳的是任意 50 筆，不是最新 50 筆；line 238 的
+        in-memory sort 只能排序這批錯誤的子集。超過 50 筆後會靜默遺漏紀錄。
+        修法：sort key 改為 timestamp 前綴（例如 `${timestamp}#${uuid}`）使 range
+        query 具時序意義，或改用 timestamp 為 sort key 並以 GSI 保留唯一性。
+      blocks: []
+
+  acceptance_criteria:
+    - "npx tsc -b --noEmit 零錯誤"
+    - "npm run lint 零錯誤"
+    - "既有 ChatPage.tsx 與 CaregiverDashboardPage.tsx 仍可編譯，未被破壞"
+    - "讀取不含 conversationId 的舊紀錄不拋錯，視為單則對話"
+    - "DynamoDB partition key 仍為 Cognito identity ID（IAM LeadingKeys 限制）"
+    - "conversationCrypto.ts 的 PBKDF2 迭代數與 AES-GCM 參數未被降低"
+    - "所有 API 回應經型別守衛驗證，不使用 as 斷言"
+    - "formatTime 有單元測試且涵蓋跨日與跨年邊界"
+    - "寫入超過 50 筆後，loadConversationHistory 取回的是時間序最新的一批而非任意子集"
+    - "新 payload 帶明文 schemaVersion 屬性，解密前即可判斷格式版本"
+
+  out_of_scope:
+    - "任何 UI 元件（ChatBubble / ChatHistory / VoiceButton 屬 TASK-005）"
+    - "ChatPage.tsx 與 CaregiverDashboardPage.tsx 的重構"
+    - "後端 API 或 Lambda（v2 為無後端架構）"
+
+  review_gate: "security_review"
+  # 理由：此任務改動加密寫入路徑與 DynamoDB partition key，
+  # 需確認未削弱 PII 加密層，且未破壞 LeadingKeys 的存取隔離
+
+  blocking_decisions: []           # 原「是否 migration」一項已查證解除，見 resolved_questions
+
+  resolved_questions:
+    - question: "舊紀錄要不要做一次性 migration 補 conversationId"
+      resolution: "不需要 migration，用欄位缺失偵測即可"
+      evidence: >
+        全 frontend/src 查無任何 version / schemaVersion 欄位（唯一命中是
+        bedrock.ts:29 prompt 內的 "Use exactly this schema:" 字串）。
+        DynamoDB Item（conversations.ts:190-196）、EncryptedConversationPayload
+        （conversationCrypto.ts:6）、ConversationRecord（care.ts:45）皆無版本標記。
+        因此舊紀錄可由「無 schemaVersion」唯一識別。
+      constraint: >
+        新的 schemaVersion 必須放在明文 Item 屬性，不可只放進 ciphertext，
+        否則 parseStoredConversation（conversations.ts:145）無法在解密前分流。
+
+  current_interfaces:
+    # context-gather 查證結果，實作時以此為準，避免重複探索
+    care_ts:
+      exports: >
+        CareEvent(9 值 union), CARE_EVENTS, CareEventCandidate, Citation,
+        CareAnswer, ConversationRecord extends CareAnswer, ElderSubject,
+        CARE_EVENT_META, isCareEvent, isClassifiedCareEvent
+      note: "ConversationRecord 為單輪扁平結構；ElderSubject 定義了但從未被持久化"
+    conversations_ts:
+      save_signature: "saveConversation(conversation: ConversationInput, encryptionPassphrase: string): Promise<ConversationRecord>"
+      load_signature: "loadConversationHistory(encryptionPassphrase: string): Promise<ConversationRecord[]>"
+      ddb_item: "{ identityId (PK), id (SK, randomUUID), timestamp, encryptedPayload }"
+      integrity_check: "解密後比對 record.id === stored.id && record.timestamp === stored.timestamp，不符則靜默丟棄"
+    chatpage_blast_radius: >
+      11 個 useState；answer 為單一 CareAnswer | undefined（line 41）。
+      saveConversation 只在 persistConversation（line 59）一處呼叫，持久化接縫窄。
+      需連動修改的是 answer/selectedCandidate/audioUrl 三個單例狀態，
+      以及 App.tsx 的 onConversationSaved 回呼契約。
+
+  notes: >
+    此任務阻塞 TASK-005 / TASK-006 / TASK-007 / TASK-008，應優先派工。
+    對應 specs/004 的 Phase 1 + Phase 2，原估 2 小時；加入 T5 排序修正後約 2.5 小時。
+    T5 對 TASK-006（照護紀錄瀏覽）是前置條件 —— 不修的話紀錄頁在超過 50 筆後
+    會顯示錯誤的資料集，而該頁正是用來驗收 US3 的。
+
+  status: "pending"

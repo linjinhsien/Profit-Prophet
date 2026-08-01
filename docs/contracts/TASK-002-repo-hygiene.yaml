@@ -1,0 +1,56 @@
+task:
+  id: "TASK-002"
+  title: "版控衛生修復：root .gitignore 與 __pycache__ 清除"
+  issue: null                      # 建立 Issue 後填入實際編號
+  worktree: "fix-repo-hygiene"     # 分支名用 - 不用 /
+  assigned_to: null                # 任何具 push 權限者皆可，10 分鐘工作量
+
+  input:
+    spec: "docs/compliance/audit-report-2026-08-01.md"
+    findings: ["F-03", "F-04"]
+    depends_on: []                 # 無前置，應最先執行
+
+  output:
+    code:
+      - ".gitignore"               # 新建於 repo 根目錄
+    config: []
+    tests: []
+
+  subtasks:
+    - id: "T1"
+      title: "建立 root .gitignore"
+      detail: >
+        至少涵蓋 .env / .env.local / *.pem / *.key / __pycache__/ / *.pyc /
+        .venv/ / node_modules/ / dist/。frontend/.gitignore 已涵蓋 frontend
+        子目錄，保留不動即可。
+    - id: "T2"
+      title: "從索引移除已追蹤的 __pycache__"
+      detail: >
+        git rm -r --cached 對 LiveCaption/backend 下 10 個 .pyc 生效，
+        檔案本體留在工作目錄，只解除追蹤。
+
+  acceptance_criteria:
+    - "repo 根目錄存在 .gitignore"
+    - "git ls-files 對 __pycache__ 與 .pyc 的查詢結果為空"
+    - "git check-ignore -v LiveCaption/backend/.env 回報被 root .gitignore 命中"
+    - "git check-ignore -v LiveCaption/backend/app/__pycache__/config.cpython-313.pyc 回報命中"
+    - "frontend/.gitignore 內容未被變更"
+    - "git status --porcelain 不含任何非預期的刪除項"
+
+  out_of_scope:
+    - "刪除 LiveCaption/backend 原始碼"
+    - "調整 frontend/.gitignore"
+    - "處理 F-05 第三方金鑰遷移至 Secrets Manager"
+
+  review_gate: "security_review"
+  # 理由：此任務的目的就是關閉金鑰進版控的路徑，需確認 .gitignore
+  # 規則真的命中 .env 與憑證類副檔名，而非只是新增了檔案
+
+  blocking_decisions: []           # 無阻塞項，可立即開工
+
+  notes: >
+    audit 已確認目前沒有 .env / *.pem / *.key 被追蹤，也沒有實體檔案存在，
+    所以這是關閉潛在風險而非清除既有洩漏。先做這項的理由是成本極低，
+    且能避免後續任務在建立 .env.local 時把金鑰帶進版控。
+
+  status: "pending"
