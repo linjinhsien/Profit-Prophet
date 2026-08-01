@@ -1,0 +1,561 @@
+openapi: 3.0.3
+info:
+  title: CareMate AI API
+  description: |
+    CareMate AI 生成式 AI 長照陪伴系統 REST API
+
+    ## 功能模組
+    - **Module A**: 語音互動陪伴（即時對話、語音辨識、語音合成）
+    - **Module B**: 生活紀錄自動擷取（睡眠、飲食、運動、服藥、情緒）
+    - **Module C**: 照護者 Dashboard 資料 API
+
+    ## 語言支援
+    - `zh-TW`: 中文（預設）
+    - `nan-TW`: 台語
+    - 未來擴充: 客語
+
+    ## 認證
+    目前使用 API Key 認證（透過 API Gateway）
+  version: 1.0.0
+  contact:
+    name: CareMate AI Team
+    email: caremate@example.com
+  license:
+    name: MIT
+
+servers:
+  - url: https://{api-id}.execute-api.{region}.amazonaws.com/{stage}
+    description: AWS API Gateway
+    variables:
+      api-id:
+        default: xxxxxxxxxx
+      region:
+        default: us-west-2
+      stage:
+        default: dev
+
+paths:
+  /chat:
+    post:
+      summary: 文字對話
+      description: |
+        接收使用者文字訊息，透過 Bedrock Claude 產生回應，
+        並自動擷取生活紀錄、儲存對話記憶、產生語音回應。
+      operationId: sendChat
+      tags:
+        - 對話
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            example:
+              elder_id: "elder-001"
+              message: "我今天早上吃了稀飯配蛋"
+              language: "zh-TW"
+      responses:
+        '200':
+          description: 對話成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              example:
+                reply_text: "很好呢！稀飯配蛋營養又好消化。今天天氣不錯，吃完早餐有沒有出去走走？"
+                audio_url: "https://s3.amazonaws.com/caremate-audio/audio-output/abc123.mp3"
+                life_record:
+                  sleep: ""
+                  food: "早餐吃了稀飯配蛋"
+                  activity: ""
+                  drug: ""
+                  emotion: "正常"
+                language: "zh-TW"
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /speech:
+    post:
+      summary: 語音對話
+      description: |
+        接收使用者語音（Base64 編碼的 WebM/Opus），
+        透過 Transcribe 轉文字 → Bedrock Claude 產生回應 → Polly 合成語音。
+      operationId: sendSpeech
+      tags:
+        - 對話
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeechRequest'
+            example:
+              elder_id: "elder-001"
+              audio: "UklGRiQA...（Base64 音訊資料）"
+              language: "zh-TW"
+      responses:
+        '200':
+          description: 語音處理成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeechResponse'
+              example:
+                transcribed_text: "我今天早上吃了稀飯配蛋"
+                reply_text: "很好呢！稀飯配蛋營養又好消化。"
+                audio_url: "https://s3.amazonaws.com/caremate-audio/audio-output/abc123.mp3"
+                life_record:
+                  sleep: ""
+                  food: "早餐吃了稀飯配蛋"
+                  activity: ""
+                  drug: ""
+                  emotion: "正常"
+                language: "zh-TW"
+        '400':
+          description: 請求參數錯誤或語音辨識失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /summary:
+    post:
+      summary: 每日摘要
+      description: |
+        根據指定日期，彙整長者當天的對話記錄，
+        產生包含睡眠、飲食、運動、服藥、情緒分析的每日照護摘要。
+      operationId: getDailySummary
+      tags:
+        - 摘要
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SummaryRequest'
+            example:
+              elder_id: "elder-001"
+              date: "2026-07-30"
+      responses:
+        '200':
+          description: 摘要產生成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummaryResponse'
+              example:
+                elder_id: "elder-001"
+                date: "2026-07-30"
+                summary: "陳阿嬤今天心情不錯，三餐正常進食。早餐吃稀飯配蛋，午餐吃便當。下午有散步15分鐘。藥物按時服用。整體狀態良好。"
+                stats:
+                  conversation_count: 5
+                  sleep: ["昨晚睡了7小時"]
+                  food: ["早餐稀飯配蛋", "午餐便當"]
+                  activity: ["散步15分鐘"]
+                  drug: ["降血壓藥已服用"]
+                  emotion: ["開心", "平靜"]
+                conversation_count: 5
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /memory/{id}:
+    get:
+      summary: 取得長者記憶
+      description: |
+        取得長者的長期記憶資料，包含個人偏好、家庭資訊、
+        健康資訊、近 7 天對話摘要。
+      operationId: getMemory
+      tags:
+        - 記憶
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 長者 ID
+          schema:
+            type: string
+          example: "elder-001"
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoryResponse'
+        '400':
+          description: 缺少必要參數
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /profile/{id}:
+    get:
+      summary: 取得長者基本資料
+      description: 取得指定長者的基本個人資料
+      operationId: getProfile
+      tags:
+        - 資料管理
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 長者 ID
+          schema:
+            type: string
+          example: "elder-001"
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '404':
+          description: 找不到該長者
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: 更新長者基本資料
+      description: 更新指定長者的基本資料欄位
+      operationId: updateProfile
+      tags:
+        - 資料管理
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 長者 ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateRequest'
+            example:
+              name: "陳阿嬤"
+              age: 78
+              language: "zh-TW"
+              disease: "高血壓、輕度失智"
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    # === Request Schemas ===
+    ChatRequest:
+      type: object
+      required:
+        - elder_id
+        - message
+      properties:
+        elder_id:
+          type: string
+          description: 長者唯一識別碼
+        message:
+          type: string
+          description: 使用者文字訊息
+          maxLength: 2000
+        language:
+          type: string
+          description: 對話語言
+          enum: [zh-TW, nan-TW]
+          default: zh-TW
+
+    SpeechRequest:
+      type: object
+      required:
+        - elder_id
+        - audio
+      properties:
+        elder_id:
+          type: string
+          description: 長者唯一識別碼
+        audio:
+          type: string
+          format: byte
+          description: Base64 編碼的音訊資料（WebM/Opus 格式）
+        language:
+          type: string
+          enum: [zh-TW, nan-TW]
+          default: zh-TW
+
+    SummaryRequest:
+      type: object
+      required:
+        - elder_id
+      properties:
+        elder_id:
+          type: string
+          description: 長者唯一識別碼
+        date:
+          type: string
+          format: date
+          description: 查詢日期（YYYY-MM-DD），預設為今天
+
+    ProfileUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 姓名
+        age:
+          type: integer
+          description: 年齡
+        gender:
+          type: string
+          description: 性別
+        language:
+          type: string
+          enum: [zh-TW, nan-TW]
+        phone:
+          type: string
+        address:
+          type: string
+        emergency_contact:
+          type: string
+        emergency_phone:
+          type: string
+        disease:
+          type: string
+          description: 疾病史
+        medications:
+          type: array
+          items:
+            type: string
+        allergies:
+          type: array
+          items:
+            type: string
+        preferences:
+          type: object
+
+    # === Response Schemas ===
+    ChatResponse:
+      type: object
+      properties:
+        reply_text:
+          type: string
+          description: AI 回應文字
+        audio_url:
+          type: string
+          format: uri
+          description: 語音回應的預簽名 URL（有效期 1 小時）
+        life_record:
+          $ref: '#/components/schemas/LifeRecord'
+        language:
+          type: string
+
+    SpeechResponse:
+      type: object
+      properties:
+        transcribed_text:
+          type: string
+          description: 語音辨識結果
+        reply_text:
+          type: string
+          description: AI 回應文字
+        audio_url:
+          type: string
+          format: uri
+          description: 語音回應 URL
+        life_record:
+          $ref: '#/components/schemas/LifeRecord'
+        language:
+          type: string
+
+    SummaryResponse:
+      type: object
+      properties:
+        elder_id:
+          type: string
+        date:
+          type: string
+          format: date
+        summary:
+          type: string
+          description: AI 產生的每日摘要
+        stats:
+          type: object
+          properties:
+            conversation_count:
+              type: integer
+            sleep:
+              type: array
+              items:
+                type: string
+            food:
+              type: array
+              items:
+                type: string
+            activity:
+              type: array
+              items:
+                type: string
+            drug:
+              type: array
+              items:
+                type: string
+            emotion:
+              type: array
+              items:
+                type: string
+        conversation_count:
+          type: integer
+
+    MemoryResponse:
+      type: object
+      properties:
+        elder_id:
+          type: string
+        profile:
+          type: object
+        personal_preferences:
+          type: object
+        family_info:
+          type: object
+        health_info:
+          type: object
+        recent_summary:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              conversation_count:
+                type: integer
+              topics:
+                type: array
+                items:
+                  type: string
+        life_records:
+          type: object
+
+    ProfileResponse:
+      type: object
+      properties:
+        elder_id:
+          type: string
+        profile:
+          $ref: '#/components/schemas/ElderProfile'
+        message:
+          type: string
+
+    ElderProfile:
+      type: object
+      properties:
+        elder_id:
+          type: string
+        name:
+          type: string
+        age:
+          type: integer
+        gender:
+          type: string
+        language:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        emergency_contact:
+          type: string
+        emergency_phone:
+          type: string
+        disease:
+          type: string
+        medications:
+          type: array
+          items:
+            type: string
+        allergies:
+          type: array
+          items:
+            type: string
+        preferences:
+          type: object
+        family_info:
+          type: object
+
+    LifeRecord:
+      type: object
+      description: 從對話中擷取的生活紀錄
+      properties:
+        sleep:
+          type: string
+          description: 睡眠相關資訊
+        food:
+          type: string
+          description: 飲食相關資訊
+        activity:
+          type: string
+          description: 運動/活動相關資訊
+        drug:
+          type: string
+          description: 服藥相關資訊
+        emotion:
+          type: string
+          description: 情緒狀態
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: 錯誤訊息
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: 對話
+    description: 語音/文字對話相關 API
+  - name: 摘要
+    description: 每日照護摘要
+  - name: 記憶
+    description: 長者長期記憶系統
+  - name: 資料管理
+    description: 長者基本資料管理

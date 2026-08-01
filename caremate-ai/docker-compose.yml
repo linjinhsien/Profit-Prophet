@@ -1,0 +1,58 @@
+# =============================================================================
+# CareMate AI - Docker Compose（本地開發環境）
+# =============================================================================
+version: '3.8'
+
+services:
+  # 前端開發伺服器
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000/api
+    ports:
+      - "3000:8080"
+    depends_on:
+      - api
+    networks:
+      - caremate
+
+  # 本地 API 模擬（使用 SAM Local 或直接 Python）
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.lambda
+      args:
+        LAMBDA_FUNCTION: chat
+    ports:
+      - "8000:8080"
+    environment:
+      - AWS_REGION=us-west-2
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - TABLE_ELDER_PROFILE=caremate-ai_elder_profile
+      - TABLE_ELDER_MEMORY=caremate-ai_elder_memory
+      - S3_AUDIO_BUCKET=caremate-audio
+      - BEDROCK_MODEL_ID=anthropic.claude-sonnet-4-20250514
+    networks:
+      - caremate
+
+  # DynamoDB Local（本地開發用）
+  dynamodb-local:
+    image: amazon/dynamodb-local:2.2.1
+    container_name: caremate-dynamodb
+    ports:
+      - "8001:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
+    volumes:
+      - dynamodb-data:/data
+    networks:
+      - caremate
+
+networks:
+  caremate:
+    driver: bridge
+
+volumes:
+  dynamodb-data:

@@ -1,0 +1,20 @@
+# =============================================================================
+# CareMate AI - Lambda Container Image
+# 用於本地測試或以容器方式部署 Lambda
+# =============================================================================
+
+FROM public.ecr.aws/lambda/python:3.12
+
+# 安裝相依套件
+COPY backend/requirements.txt ${LAMBDA_TASK_ROOT}/
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
+
+# 複製共用模組
+COPY backend/shared/ ${LAMBDA_TASK_ROOT}/shared/
+
+# 複製 Lambda 函數（預設為 chat，可透過 build-arg 切換）
+ARG LAMBDA_FUNCTION=chat
+COPY backend/lambdas/${LAMBDA_FUNCTION}/ ${LAMBDA_TASK_ROOT}/
+
+# 設定 handler
+CMD ["handler.handler"]

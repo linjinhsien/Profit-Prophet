@@ -1,0 +1,17 @@
+# CareMate AI - Terraform 變數設定範例
+# 複製此檔案為 terraform.tfvars 並填入實際值
+
+aws_region     = "us-west-2"
+environment    = "dev"
+project_name   = "caremate-ai"
+
+# Bedrock 模型
+bedrock_model_id           = "anthropic.claude-sonnet-4-20250514"
+bedrock_embedding_model_id = "amazon.titan-embed-text-v2:0"
+
+# Lambda 設定
+lambda_timeout = 120
+lambda_memory  = 512
+
+# 前端網域（CORS），正式環境請改為實際網域
+frontend_domain = "*"
