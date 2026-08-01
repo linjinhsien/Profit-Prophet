@@ -68,15 +68,27 @@ TASK-003 ─┴─→ TASK-005 ──→ TASK-007 ─┐
 | TASK-002 | 版控衛生修復 | — | F-03, F-04 | ✅ 已產出 |
 | TASK-003 | 對話基礎層 | T001, T003, T004, T005, T006, T015 | — | ✅ 已產出 |
 | TASK-004 | 測試框架 + CI | T002 | F-07, D-1 | ✅ 已產出 |
-| TASK-005 | US1 語音對話 UI | T007–T012 | C-1（ChatBubble 免責聲明） | 待 Wave 1 產出 |
-| TASK-006 | US3 照護紀錄瀏覽 | T016–T020 | C-1（Dashboard 免責聲明） | 待 Wave 1 產出 |
-| TASK-007 | US2 文字對話 | T013, T014 | — | 待 Wave 2 產出 |
-| TASK-008 | US4 篩選搜尋 | T021–T024 | — | 待 Wave 2 產出 |
-| TASK-009 | Polish + 無障礙 | T025–T029 | B-8（資料刪除能力） | 待 Wave 3 產出 |
+| TASK-005 | US1 語音對話 UI | T007–T012 | C-1（ChatBubble 免責聲明） | ✅ 已產出 |
+| TASK-006 | US3 照護紀錄瀏覽 | T016–T020 | C-1（Dashboard 免責聲明） | ✅ 已產出 |
+| TASK-007 | US2 文字對話 | T013, T014 | — | ✅ 已產出 |
+| TASK-008 | US4 篩選搜尋 | T021–T024 | — | ✅ 已產出 |
+| TASK-009 | Polish + 無障礙 | T025–T029 | B-8（資料刪除能力） | ✅ 已產出 |
 
 `TASK-001`（issue #4）為既有的前端整合任務，已產出目前的 frontend 程式碼，不重新派工。
 
-spec 的 T015（每則訊息自動存檔）刻意從 US2 移到 TASK-003，因為它屬於 `useConversation` 的職責。留在 US2 會導致 ChatPage 重工。
+## 與 spec 的差異（撰寫 Contract 時查證後的調整）
+
+寫 Contract 時逐一核對現況，以下四處偏離 `specs/004/tasks.md` 的原始描述，都是刻意的：
+
+**T015 從 US2 移到 TASK-003。** 每則訊息自動存檔是 `useConversation` 的職責，留在 US2 會讓 ChatPage 重工一次。TASK-007 因此只剩兩個子任務，工量從 1.5 小時下修到 1 小時。
+
+**US4 的範圍比 spec 小很多。** `CaregiverDashboardPage.tsx` 現況已經有完整的分類篩選：`filter` 狀態、9 顆 `CARE_EVENTS` 按鈕（含 `aria-pressed`）、`filteredRecords` useMemo 全都在。TASK-008 實際要做的只是抽成元件並補上關鍵字搜尋、debounce、結果筆數通報。工量從 1.5 小時下修到 1 小時。
+
+**spec 寫 dropdown，Contract 保留按鈕群。** T021 描述分類篩選用 dropdown，但現況的按鈕群已具備無障礙屬性且可用。改成 dropdown 是無收益的重工，TASK-008 明訂維持按鈕群。
+
+**T011 免責聲明併入 T007 而非獨立子任務。** 寫在 ChatBubble 元件內部才能保證 spec SC-006 要求的 100% 覆蓋率；獨立成一步容易漏掉分支。
+
+另外 TASK-009 新增一項非 spec 的子任務 T3（資料刪除能力），來源是 audit B-8。它是唯一有外部依賴的子任務——IAM policy 目前只授予 `PutItem` 與 `Query`，需 CloudOps 補 `DeleteItem` 才會生效。
 
 ## 兩個 v1/v2 不一致，派工前需處理
 
@@ -110,14 +122,25 @@ git worktree add Profit-Prophet.worktrees/feature-conversation-foundation featur
 
 完成回報與 PR 流程沿用 `docs/dispatch-task-001.md` 的 Step 5–7，不重複。
 
-## 尚未執行的事
+## 進度
 
-以下都還沒做，需要你確認後才動：
+**已完成**
 
-- 未建立任何 Issue（`gh auth status` 顯示 keyring 登入失敗，需先 `gh auth login` 重新認證）
+TASK-002 已實作並 commit（`df16329`）：建立 root `.gitignore`，解除 10 個 `.pyc` 追蹤。六項驗收條件全部驗證通過——`.env` 命中 `.gitignore:4`、`.pyc` 命中 `.gitignore:14`、`.env.example` 未被誤忽略、`frontend/.gitignore` 未動、追蹤中的 `.pyc` 數量為 0。
+
+9 份 Contract 全部產出並通過 YAML 解析。
+
+**尚未執行**
+
+- 未建立任何 Issue（`gh auth status` 顯示 keyring 登入失敗，需先 `gh auth login`）
 - 未建立任何 branch 或 worktree
 - 未將 Contract 寫入 Issue comment
-- TASK-005 之後的 Contract 尚未產出，待 Wave 0 收斂後再依實際結果編寫
+- TASK-003 至 TASK-009 的程式碼一行都還沒寫
+- 未 push（所有 commit 都留在本機 `master`）
+
+**建議下一步**
+
+TASK-004（測試框架）應排在 TASK-003 之前實作。TASK-003 的驗收條件要求 `formatTime` 有單元測試，但目前 `npm run test` 這個指令根本不存在，寫了測試也跑不起來。先把驗證工具備好再寫需要驗證的程式碼。
 
 原本列的 4 項 blocking decision，經 context-gather 查證後 2 項解除：
 

@@ -1,0 +1,62 @@
+task:
+  id: "TASK-007"
+  title: "US2 文字對話收尾：送出清空與新對話重設"
+  issue: null                      # 建立 Issue 後填入實際編號
+  worktree: "feature-us2-text-chat"
+  assigned_to: null
+
+  input:
+    spec: "specs/004-voice-chat-care-record/tasks.md"
+    spec_tasks: ["T013", "T014"]
+    depends_on: ["TASK-005"]       # 共用 ChatPage，必須排在 TASK-005 之後
+
+  output:
+    code:
+      - "frontend/src/pages/ChatPage.tsx"   # 續 TASK-005 的重構
+    tests: []
+    config: []
+
+  subtasks:
+    - id: "T1"
+      spec_task: "T013"
+      title: "文字送出改走 sendMessage 並清空輸入框"
+      detail: >
+        現況 submitQuery 直接呼叫 queryKnowledgeBase 並 setAnswer，
+        且送出後 queryText 不清空。改為 sendMessage(text, 'text')。
+        原有的 1-2000 字元驗證與「請先選擇個案」檢查必須保留。
+      blocks: ["T2"]
+    - id: "T2"
+      spec_task: "T014"
+      title: "新對話按鈕"
+      detail: >
+        呼叫 resetConversation() 開新的 conversationId。
+        需確認重設不會清掉已寫入 DynamoDB 的紀錄，只清畫面狀態。
+
+  acceptance_criteria:
+    - "npx tsc -b --noEmit 零錯誤"
+    - "npm run lint 零錯誤"
+    - "npm run test 通過"
+    - "送出後輸入框清空，且可立即輸入下一個問題"
+    - "連續提問時歷史訊息保留，不被覆蓋"
+    - "1 至 2000 字元驗證維持有效，超長或全空白仍被擋下"
+    - "未選擇個案時仍顯示「請先在個案管理選擇一位照護個案」"
+    - "「新對話」後畫面清空但 DynamoDB 既有紀錄不受影響"
+    - "「新對話」後產生的訊息帶新的 conversationId"
+
+  out_of_scope:
+    - "每則訊息自動存檔（已在 TASK-003 的 T3 實作於 useConversation）"
+    - "語音相關元件（TASK-005）"
+
+  review_gate: "none"
+  # 理由：純 UI 狀態調整，不觸及憑證、加密或資料存取路徑
+
+  blocking_decisions: []
+
+  notes: >
+    spec 原本把 T015（每則訊息自動存檔）放在 US2，已移到 TASK-003 的 T3，
+    因為那是 useConversation 的職責，留在此處會導致 ChatPage 重工。
+    本任務因此只剩兩個子任務，工量約 1 小時而非 spec 估的 1.5 小時。
+    刻意與 TASK-005 分開排序而非合併：兩者都改 ChatPage，
+    並行會直接衝突。
+
+  status: "pending"
