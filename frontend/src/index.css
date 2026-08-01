@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  color: #0f172a;
+  background: #f8fafc;
+  font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #0f766e;
+  outline-offset: 3px;
+}
