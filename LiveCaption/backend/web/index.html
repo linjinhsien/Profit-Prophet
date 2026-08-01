@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>安心聽 CareCaption — 即時字幕</title>
+<style>
+  :root {
+    --bg: #10151c;
+    --panel: #1a222d;
+    --line: #2c3846;
+    --text: #f2f6fa;
+    --muted: #8fa2b6;
+    --accent: #4ea8ff;
+    --good: #3ddc84;
+    --warn: #ffc94d;
+    --bad: #ff6b6b;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 1.5rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  main { max-width: 60rem; margin: 0 auto; }
+
+  h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+
+  .sub { color: var(--muted); margin: 0 0 1.5rem; font-size: .95rem; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: .75rem;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+
+  .field { display: flex; flex-direction: column; gap: .35rem; }
+
+  label { font-size: .85rem; color: var(--muted); }
+
+  select {
+    font: inherit;
+    font-size: 1rem;
+    padding: .55rem .7rem;
+    min-width: 11rem;
+    color: var(--text);
+    background: #131a23;
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+  }
+
+  button {
+    font: inherit;
+    font-size: 1.15rem;
+    font-weight: 600;
+    padding: .7rem 1.6rem;
+    border: 0;
+    border-radius: .5rem;
+    cursor: pointer;
+    background: var(--accent);
+    color: #071018;
+  }
+
+  button.secondary { background: #33414f; color: var(--text); }
+
+  button[disabled] { opacity: .45; cursor: not-allowed; }
+
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* 音量條：長者要一眼看出「麥克風有沒有收到我的聲音」 */
+  .meter {
+    height: 2rem;
+    background: #131a23;
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--good);
+    transition: width 80ms linear, background-color 200ms;
+  }
+
+  .status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    font-size: .9rem;
+    color: var(--muted);
+    margin-top: .9rem;
+  }
+
+  .status b { color: var(--text); font-weight: 600; }
+
+  .dot {
+    display: inline-block;
+    width: .6rem;
+    height: .6rem;
+    border-radius: 50%;
+    background: var(--muted);
+    margin-right: .4rem;
+  }
+
+  .dot.live { background: var(--good); }
+  .dot.error { background: var(--bad); }
+
+  /* 字幕區：字要大，行距要鬆 */
+  #captions {
+    font-size: 1.6rem;
+    line-height: 1.75;
+    min-height: 9rem;
+  }
+
+  .final { margin: 0 0 .8rem; }
+
+  .final .meta {
+    display: block;
+    font-size: .8rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  #partial {
+    font-size: 1.6rem;
+    color: var(--warn);
+    min-height: 2.6rem;
+  }
+
+  .empty { color: var(--muted); font-size: 1.05rem; }
+
+  #error {
+    color: var(--bad);
+    font-size: 1rem;
+    margin-top: .8rem;
+    min-height: 1.5rem;
+  }
+
+  .hint { font-size: .85rem; color: var(--muted); margin-top: 1rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .meter-fill { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>安心聽 CareCaption</h1>
+  <p class="sub">對著麥克風說話，Amazon Transcribe Streaming 會即時把字幕打在下面。</p>
+
+  <section class="panel" aria-labelledby="ctrl-heading">
+    <h2 id="ctrl-heading" class="sr-only" hidden>錄音控制</h2>
+
+    <div class="controls">
+      <div class="field">
+        <label for="preset">情境</label>
+        <select id="preset">
+          <option value="clinic">看診／衛教（固定中文，字幕最穩）</option>
+          <option value="caregiver">照服員與長者（自動判語言）</option>
+          <option value="elder">長者自己用（低延遲）</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="lang">語言</label>
+        <select id="lang">
+          <option value="">依情境預設</option>
+          <option value="zh-TW">中文（台灣）</option>
+          <option value="auto">自動辨識</option>
+          <option value="en-US">英語</option>
+          <option value="id-ID">印尼語</option>
+          <option value="vi-VN">越南語</option>
+          <option value="ja-JP">日語</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="engine">引擎</label>
+        <select id="engine">
+          <option value="">依環境變數</option>
+          <option value="aws">aws（Amazon Transcribe）</option>
+          <option value="elevenlabs">elevenlabs（Scribe v2 Realtime）</option>
+          <option value="mock">mock（離線模擬）</option>
+          <option value="auto">auto（連不上就退回 mock）</option>
+        </select>
+      </div>
+
+      <button id="start" type="button">開始說話</button>
+      <button id="stop" type="button" class="secondary" disabled>結束</button>
+    </div>
+
+    <div class="meter" role="img" aria-label="麥克風音量">
+      <div class="meter-fill" id="meter"></div>
+    </div>
+
+    <div class="status">
+      <span><span class="dot" id="dot"></span><b id="state">尚未開始</b></span>
+      <span>引擎 <b id="s-engine">—</b></span>
+      <span>區域 <b id="s-region">—</b></span>
+      <span>語言 <b id="s-lang">—</b></span>
+      <span>已送出 <b id="s-sent">0.0</b> 秒</span>
+    </div>
+
+    <p id="error" role="alert"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="cap-heading">
+    <h2 id="cap-heading" class="sub" style="margin:0 0 .75rem">字幕</h2>
+    <div id="captions" aria-live="polite" aria-atomic="false">
+      <p class="empty" id="placeholder">按「開始說話」後，字幕會出現在這裡。</p>
+    </div>
+    <div id="partial" aria-live="polite" aria-atomic="true"></div>
+  </section>
+
+  <p class="hint">
+    黃色是還在辨識中的文字（可能會被改寫），白色是定稿。
+    瀏覽器需要麥克風權限；Safari 與 Chrome 都支援。
+  </p>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
