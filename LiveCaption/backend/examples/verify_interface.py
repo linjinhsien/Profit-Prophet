@@ -137,9 +137,9 @@ def main() -> int:
         "x-amzn-transcribe-language-code" not in caregiver,
     )
     check(
-        "caregiver 候選語言含印尼語與越南語",
-        "id-ID" in caregiver.get("x-amzn-transcribe-language-options", "")
-        and "vi-VN" in caregiver.get("x-amzn-transcribe-language-options", ""),
+        "caregiver 候選語言含中文與英文",
+        "zh-TW" in caregiver.get("x-amzn-transcribe-language-options", "")
+        and "en-US" in caregiver.get("x-amzn-transcribe-language-options", ""),
         caregiver.get("x-amzn-transcribe-language-options", "<缺>"),
     )
     check(

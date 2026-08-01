@@ -73,16 +73,10 @@ __all__ = [
 
 PartialStability = Literal["low", "medium", "high"]
 
-#: 長照現場最常見的語言組合：
-#: 台灣長者（中文）＋ 印尼/越南/菲律賓籍照服員 ＋ 英文/日文家屬。
-#: 這些語言都在 Transcribe Streaming 的支援清單內。
+#: 預設支援的語言：中文與英文。
 CARE_LANGUAGE_OPTIONS: Final[tuple[str, ...]] = (
     "zh-TW",  # 中文（台灣）
-    "id-ID",  # 印尼語
-    "vi-VN",  # 越南語
     "en-US",  # 英語
-    "ja-JP",  # 日語
-    "th-TH",  # 泰語
 )
 
 #: Transcribe Streaming 目前沒有台北區域，設成台北會直接連不上。
@@ -667,10 +661,10 @@ class MockStreamingRecognizer(StreamingRecognizer):
     DEFAULT_SCRIPT: Final[tuple[tuple[str, str], ...]] = (
         ("zh-TW", "阿嬤，早安，我們現在來量血壓好嗎"),
         ("zh-TW", "我今天早上覺得頭有點暈，胸口悶悶的"),
-        ("id-ID", "Nenek, obat pagi sudah diminum ya"),
+        ("en-US", "Blood pressure is one forty-five over eighty-eight"),
         ("zh-TW", "血壓一百四十五，八十八，血氧九十七"),
         ("zh-TW", "昨天晚上她起來上廁所的時候差一點跌倒"),
-        ("vi-VN", "Bà đã ăn hết một bát cháo sáng nay"),
+        ("en-US", "She almost fell when going to the bathroom last night"),
         ("zh-TW", "下午三點要記得帶她去日照中心做復健"),
     )
 

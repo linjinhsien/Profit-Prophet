@@ -250,8 +250,6 @@ export function LiveCaptionPage() {
               <option value="zh-TW">中文（台灣）</option>
               <option value="auto">自動辨識</option>
               <option value="en-US">英語</option>
-              <option value="id-ID">印尼語</option>
-              <option value="vi-VN">越南語</option>
             </select>
           </div>
 
