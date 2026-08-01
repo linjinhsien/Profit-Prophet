@@ -1,0 +1,103 @@
+task:
+  id: "TASK-004"
+  title: "前端測試框架修復與 CI 品質門檻建立"
+  issue: null                      # 建立 Issue 後填入實際編號
+  worktree: "test-frontend-ci"
+  assigned_to: null
+
+  input:
+    spec: "specs/004-voice-chat-care-record/tasks.md"
+    spec_tasks: ["T002"]
+    audit: "docs/compliance/audit-report-2026-08-01.md"
+    findings: ["F-07", "D-1"]
+    standards: ".kiro/steering/coding-standards.md"
+    depends_on: []                 # 可與 TASK-002 / TASK-003 並行
+
+  output:
+    code:
+      - "frontend/vitest.config.ts"        # 新建（或併入 vite.config.ts 的 test 區塊）
+      - "frontend/package.json"            # 加 test script 與 devDependencies
+      - ".github/workflows/frontend-ci.yml" # 新建
+    tests:
+      - "frontend/src/App.test.tsx"        # 現存但無法執行，需修復至可跑
+    config:
+      - "frontend/src/test/setupTests.ts"  # 現存，確認被 vitest 正確載入
+
+  subtasks:
+    - id: "T1"
+      title: "宣告缺失的測試依賴"
+      detail: >
+        node_modules 內存在 @vitest/* 與 @testing-library/ 但 package.json
+        未宣告，頂層 vitest 套件實際不存在。需明確宣告 vitest、
+        @testing-library/react、@testing-library/jest-dom、jsdom。
+        依 SECURITY-RULES 5 全部鎖精確版本，不使用 ^ 或 ~。
+      blocks: ["T2"]
+    - id: "T2"
+      title: "vitest 設定與 test script"
+      detail: >
+        environment 設 jsdom，setupFiles 指向現有 src/test/setupTests.ts。
+        script 用 --run 單次執行，不進 watch 模式。
+      blocks: ["T3", "T4"]
+    - id: "T3"
+      title: "修復 App.test.tsx 至可通過"
+      detail: "現有測試檔從未被執行過，內容可能已與 App.tsx 現況脫節。"
+    - id: "T4"
+      title: "GitHub Actions workflow"
+      detail: >
+        對 push 與 pull_request 觸發，跑 npm ci、npm run lint、
+        npx tsc -b --noEmit、npm run test、npm audit --audit-level=high。
+        涵蓋 coding-standards 的 lint 零錯誤與型別零錯誤門檻。
+
+  acceptance_criteria:
+    - "npm run test 可在乾淨的 npm ci 環境下執行並通過"
+    - "package.json 宣告 vitest 與所有 testing-library 依賴，皆為精確版本"
+    - "package.json 不含任何 ^ 或 ~ 版本範圍"
+    - "src/test/setupTests.ts 確實被 vitest 載入（移除它會導致測試失敗）"
+    - "workflow 在 lint 失敗時使 CI 紅燈"
+    - "workflow 在 tsc 型別錯誤時使 CI 紅燈"
+    - "workflow 在 npm audit 出現 high 以上漏洞時使 CI 紅燈"
+    - "npm audit --audit-level=high 於當前依賴樹回報 0 漏洞"
+
+  out_of_scope:
+    - "覆蓋率 80% 門檻的達成（現有程式碼幾乎無測試，需另立任務逐步補）"
+    - "Python 端 pytest / ruff / mypy 工具鏈（F-06，屬 LiveCaption/backend，見 notes）"
+    - "branch protection 設定（需 repo admin 權限，屬人工 Stage -1）"
+
+  review_gate: "none"
+  # 理由：純建置與 CI 設定，不觸及憑證、加密或資料存取路徑
+
+  blocking_decisions:
+    - question: "覆蓋率門檻要不要現在就設 80% 並讓 CI 強制"
+      impacts: "T4 的 workflow 是否加 --coverage 與 threshold"
+      why_blocking: >
+        現況覆蓋率接近 0，直接設 80% 會讓 CI 永遠紅燈，等於門檻失效。
+      recommendation: >
+        先讓 CI 產出覆蓋率數字但不設門檻，待補測試後再逐步調高。
+        此為刻意的暫時放寬，需記入 risk-register 而非默默略過。
+  resolved_questions:
+    - question: "LiveCaption/backend 是否仍屬 v2 範圍"
+      resolution: "已查證為孤立程式碼，不屬 v2；CI 不需 Python job"
+      evidence: >
+        1. frontend/src 全域查無 ws:// / wss:// / localhost / 127.0.0.1 /
+           port 8000 / captions / WebSocket（唯一命中是 useVoiceInput.ts:95
+           的 PCM 縮放常數 sample * 0x8000）。
+        2. 全 repo 排除 LiveCaption/ 後查無 LiveCaption / ElevenLabs 字面引用，
+           任何 spec、plan、README、steering、script 都沒提到它。
+        3. 前端已自行做瀏覽器直連 STT：useVoiceInput.ts:248 建立
+           TranscribeStreamingClient，zh-TW / pcm / 16000Hz，與該後端功能重疊。
+        4. git 紀錄：c01c6c6 單一 commit 34 檔全在 LiveCaption/ 之下，
+           5 分鐘後由 PR #7 合併（32d76ca），無任何整合修改，之後未再被碰過
+           （git log 32d76ca..HEAD -- LiveCaption 為空）。
+        5. 自帶競品 UI：LiveCaption/backend/web/{index.html,app.js,pcm-worklet.js}
+           是完整獨立前端，產品名為「安心聽 CareCaption」而非 Profit-Prophet。
+      consequence: >
+        F-06、F-01、F-02、F-05 四項發現都指向這份孤立程式碼。建議由 Architect
+        決定移除或標註 archived，而非投入資源修復 —— 修一份沒有任何呼叫者的
+        服務不會降低實際風險。此決策不阻塞本任務。
+
+  notes: >
+    此任務不阻塞其他任務，但越早完成越有價值 —— TASK-005 之後的所有 UI
+    任務都會產出需要測試的元件，先把框架備好可避免事後補測。
+    Python 工具鏈（F-06）排除，理由見 resolved_questions。
+
+  status: "pending"
