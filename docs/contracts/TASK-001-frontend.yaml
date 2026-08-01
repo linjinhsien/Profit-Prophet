@@ -1,0 +1,83 @@
+task:
+  id: "TASK-001"
+  title: "前端整合：Care Companion UI → Profit-Prophet API"
+  issue: 4
+  worktree: "feature-frontend"     # 分支名用 - 不用 /
+  assigned_to: "gyphsophila"
+
+  input:
+    spec: "docs/task-specs/TASK-001-frontend.md"
+    reference_repo: "https://github.com/gyphsophila/care-companion-demo/tree/master/frontend"
+    api_contract: ".kiro/specs/realtime-qa-api/requirements.md"
+    depends_on: []                 # 無前置任務，可立即開工
+
+  output:
+    code:
+      - "frontend/src/types/"
+      - "frontend/src/api/"
+      - "frontend/src/pages/"
+      - "frontend/src/components/"
+      - "frontend/src/lib/"
+    config:
+      - "frontend/package.json"
+      - "frontend/vite.config.ts"
+      - "frontend/eslint.config.js"
+      - "frontend/tsconfig.app.json"
+      - "frontend/.env.example"
+    tests: []                      # 測試框架另開任務，此任務不含
+
+  subtasks:
+    - id: "T1"
+      title: "專案骨架（Vite + React 19 + TS + Tailwind 4）"
+      blocks: ["T2"]
+    - id: "T2"
+      title: "API 層與型別定義"
+      blocked_by_decision: "API key 策略"
+      blocks: ["T3", "T4"]
+    - id: "T3"
+      title: "靜態頁面移植（PersonaSelection + ElderManagement）"
+      blocks: ["T5"]
+    - id: "T4"
+      title: "WebSocket 串流層"
+      blocks: ["T5"]
+    - id: "T5"
+      title: "Chat 頁（串流顯示 + 分類標籤）"
+    - id: "T6"
+      title: "Caregiver Dashboard（8 分類篩選）"
+    - id: "T7"
+      title: "語音輸入輸出（可獨立後做）"
+
+  acceptance_criteria:
+    - "npm run build 無 TypeScript 錯誤"
+    - "npm run lint 無 error"
+    - "所有 API 回應經過型別守衛驗證，不使用 as 斷言"
+    - "400 / 403 / 504 各有獨立的 UI 呈現"
+    - "WebSocket 閒置逾時可自動重連且不遺失已顯示內容"
+    - "8 個 Care Event 分類皆有中文標籤與視覺樣式"
+    - "unclassified 情境有 top-3 候選選擇介面"
+    - "麥克風權限被拒時文字輸入仍可用"
+    - "Polly 失敗時降級為純文字，不阻擋對話"
+    - ".env.example 不含任何金鑰"
+    - "無 API key 硬編碼在原始碼"
+    - "鍵盤可完整操作，表單欄位有 label 與 aria-describedby"
+
+  out_of_scope:
+    - "後端 API 實作"
+    - "CDK 部署設定"
+    - "Cognito / BFF 認證後端"
+    - "單元測試框架建置"
+
+  review_gate: "security_review"
+  # 理由：前端涉及憑證處理（API key）與使用者輸入，需檢查
+  # 金鑰洩漏、XSS、以及 WebSocket 訊息未驗證等問題
+
+  blocking_decisions:
+    - question: "API key 策略：本機 demo 還是要部署？"
+      impacts: "T2 的 api/config.ts 認證實作方式"
+      why_blocking: "VITE_* 變數會被打包進瀏覽器 bundle，等於公開金鑰"
+    - question: "後端 API 何時可用？"
+      impacts: "T2 是否需要先做 mock 模式"
+    - question: "care-companion-demo 可直接複製程式碼還是只能參考結構？"
+      impacts: "T3 的工作量估算"
+
+  status: "pending"
