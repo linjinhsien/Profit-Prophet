@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react'
-import { getConfigurationIssues } from './lib/config'
+import { useCallback, useEffect, useState } from 'react'
+import { getConfigurationIssues, loadRemoteConfig } from './lib/config'
 import { hasAuthenticatedCognitoLogin } from './lib/credentials'
 import { CaregiverDashboardPage } from './pages/CaregiverDashboardPage'
 import { ChatPage } from './pages/ChatPage'
@@ -35,9 +35,17 @@ function App() {
   const [selectedElderId, setSelectedElderId] = useState<string | undefined>(INITIAL_ELDERS[0]?.id)
   const [records, setRecords] = useState<ConversationRecord[]>([])
   const [historyPassphrase, setHistoryPassphrase] = useState('')
-  const configurationIssues = getConfigurationIssues()
+  const [configLoaded, setConfigLoaded] = useState(false)
+  const configurationIssues = configLoaded ? getConfigurationIssues() : []
   const selectedElder = elders.find((elder) => elder.id === selectedElderId)
   const hasAuthenticatedSession = hasAuthenticatedCognitoLogin()
+
+  // 啟動時從 backend /api/aws-config 讀取 Secrets Manager 的設定
+  useEffect(() => {
+    loadRemoteConfig()
+      .then(() => setConfigLoaded(true))
+      .catch(() => setConfigLoaded(true))
+  }, [])
 
   const handleConversationSaved = useCallback((record: ConversationRecord) => {
     setRecords((current) => mergeRecords(current, [record]))

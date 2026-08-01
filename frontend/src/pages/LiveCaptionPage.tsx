@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getBackendUrl } from '../lib/config'
+import { requestMicrophone } from '../lib/micSupport'
 
 type CaptionMessage =
   | { type: 'ready'; engine: string; region: string; language: string }
@@ -45,7 +47,8 @@ export function LiveCaptionPage() {
   const captionsEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetch('/api/config')
+    const backendUrl = getBackendUrl()
+    fetch(`${backendUrl}/api/config`)
       .then((r) => {
         if (!r.ok) { setBackendAvailable(false); return }
         return r.json()
@@ -124,7 +127,7 @@ export function LiveCaptionPage() {
     setSentSeconds(0)
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await requestMicrophone({
         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       })
       mediaStreamRef.current = stream
@@ -136,8 +139,9 @@ export function LiveCaptionPage() {
       const params = new URLSearchParams({ preset })
       if (lang) params.set('lang', lang)
       if (engineSelect) params.set('engine', engineSelect)
-      const scheme = location.protocol === 'https:' ? 'wss' : 'ws'
-      const wsUrl = `${scheme}://${location.host}/ws/captions?${params}`
+      const backendUrl = getBackendUrl()
+      const wsBase = backendUrl ? backendUrl.replace(/^http/, 'ws') : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`
+      const wsUrl = `${wsBase}/ws/captions?${params}`
 
       const ws = new WebSocket(wsUrl)
       ws.binaryType = 'arraybuffer'

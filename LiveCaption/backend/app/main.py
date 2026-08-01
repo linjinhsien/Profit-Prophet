@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, get_args
 
 from fastapi import FastAPI, Query, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -46,6 +47,18 @@ _DOTENV_PATH, _ = load_dotenv()
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
 app = FastAPI(title="安心聽 CareCaption", docs_url=None, redoc_url=None)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://profit-prophet-frontend-site.s3-website-us-west-2.amazonaws.com",
+        "https://d1qintm5rk17ye.cloudfront.net",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 
 
@@ -66,6 +79,56 @@ async def api_config() -> dict[str, Any]:
         "sampleRate": config.audio.sample_rate_hz,
         "chunkMs": config.chunk_ms,
         "settingsSource": _DOTENV_PATH.name if _DOTENV_PATH else "環境變數",
+    }
+
+
+def _read_secrets_manager(secret_name: str, region: str) -> dict[str, str]:
+    """從 AWS Secrets Manager 讀取 JSON secret。結果會快取 5 分鐘。"""
+    import json
+    import time
+
+    import boto3
+
+    cache = getattr(_read_secrets_manager, "_cache", None)
+    now = time.time()
+    if cache and cache["name"] == secret_name and now - cache["ts"] < 300:
+        return cache["data"]
+
+    session = boto3.Session()
+    client = session.client("secretsmanager", region_name=region)
+    resp = client.get_secret_value(SecretId=secret_name)
+    data = json.loads(resp["SecretString"])
+
+    _read_secrets_manager._cache = {"name": secret_name, "data": data, "ts": now}  # type: ignore[attr-defined]
+    return data
+
+
+@app.get("/api/aws-config")
+async def api_aws_config() -> dict[str, Any]:
+    """從 Secrets Manager 讀取前端需要的 AWS 設定，不含任何金鑰。
+
+    前端開頁時呼叫這個端點取得 Cognito Identity Pool ID、
+    Bedrock KB ID 等設定，不需要寫死在 build 裡。
+    """
+    import os
+
+    secret_name = os.environ.get("CARECAPTION_SECRET_NAME", "profit-prophet/env")
+    region = os.environ.get("AWS_REGION", "us-west-2")
+
+    try:
+        secrets = _read_secrets_manager(secret_name, region)
+    except Exception as exc:
+        logger.warning("讀取 Secrets Manager 失敗：%s", exc)
+        return {"error": f"無法讀取設定：{exc}"}
+
+    # 只回傳前端需要的設定，不回傳任何金鑰
+    return {
+        "region": secrets.get("VITE_AWS_REGION", "us-west-2"),
+        "identityPoolId": secrets.get("VITE_COGNITO_IDENTITY_POOL_ID", ""),
+        "knowledgeBaseId": secrets.get("VITE_BEDROCK_KB_ID", ""),
+        "modelArn": secrets.get("VITE_BEDROCK_MODEL_ARN", ""),
+        "tableName": secrets.get("VITE_DDB_TABLE_NAME", ""),
+        "backendUrl": secrets.get("VITE_BACKEND_URL", ""),
     }
 
 

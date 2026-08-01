@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getBackendUrl } from './config'
+import { isMicrophoneSupported, requestMicrophone } from './micSupport'
 
 const SAMPLE_RATE = 16_000
 const CHUNK_MS = 100
@@ -71,12 +73,8 @@ export function useVoiceInput(): VoiceInputController {
     let pendingContext: AudioContext | undefined
 
     try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error('此瀏覽器不支援麥克風錄音。')
-      }
-
-      // 取得麥克風
-      pendingStream = await navigator.mediaDevices.getUserMedia({
+      // 取得麥克風（環境不支援時會丟出說明清楚的錯誤）
+      pendingStream = await requestMicrophone({
         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: false,
       })
@@ -101,9 +99,10 @@ export function useVoiceInput(): VoiceInputController {
       }
 
       // 建立 WebSocket 連線到 backend
-      const scheme = location.protocol === 'https:' ? 'wss' : 'ws'
+      const backendUrl = getBackendUrl()
+      const wsBase = backendUrl ? backendUrl.replace(/^http/, 'ws') : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`
       const params = new URLSearchParams({ preset: 'clinic', lang: 'zh-TW' })
-      const wsUrl = `${scheme}://${location.host}/ws/captions?${params}`
+      const wsUrl = `${wsBase}/ws/captions?${params}`
       const ws = new WebSocket(wsUrl)
       ws.binaryType = 'arraybuffer'
 
@@ -214,7 +213,7 @@ export function useVoiceInput(): VoiceInputController {
   return {
     ...(errorMessage === undefined ? {} : { errorMessage }),
     interimTranscript,
-    isSupported: typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia),
+    isSupported: isMicrophoneSupported(),
     start,
     status,
     stop,

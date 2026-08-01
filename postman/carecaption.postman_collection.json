@@ -1,0 +1,390 @@
+{
+  "info": {
+    "name": "CareCaption Backend",
+    "description": "LiveCaption / CareCaption 後端 API 測試。\n\n涵蓋 HTTP 端點行為、CORS 設定，以及 Constitution 約束（region 白名單、不外洩憑證）。\n\nWebSocket 端點 /ws/captions 無法用 newman 執行，請用 Postman App 的 WebSocket request 手動測，或跑 scripts/ws-smoke-test.py。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "allowed_origin", "value": "http://localhost:5173" },
+    { "key": "disallowed_origin", "value": "http://evil.example.com" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET / (前端頁面)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/", "host": ["{{base_url}}"], "path": [""] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('回傳 200', () => pm.response.to.have.status(200))",
+                  "pm.test('是 HTML', () => pm.expect(pm.response.headers.get('content-type')).to.include('text/html'))",
+                  "pm.test('回應時間 < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /static/pcm-worklet.js",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/static/pcm-worklet.js",
+              "host": ["{{base_url}}"],
+              "path": ["static", "pcm-worklet.js"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('回傳 200（前端錄音要靠這支）', () => pm.response.to.have.status(200))",
+                  "pm.test('是 JavaScript', () => pm.expect(pm.response.headers.get('content-type')).to.include('javascript'))",
+                  "pm.test('內容含 AudioWorkletProcessor', () => pm.expect(pm.response.text()).to.include('AudioWorkletProcessor'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /不存在的路徑 (應為 404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/does-not-exist",
+              "host": ["{{base_url}}"],
+              "path": ["api", "does-not-exist"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('未知路徑回 404', () => pm.response.to.have.status(404))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Config API",
+      "item": [
+        {
+          "name": "GET /api/config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/config",
+              "host": ["{{base_url}}"],
+              "path": ["api", "config"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('回傳 200', () => pm.response.to.have.status(200))",
+                  "",
+                  "const body = pm.response.json()",
+                  "",
+                  "pm.test('必要欄位都存在', () => {",
+                  "  pm.expect(body).to.have.property('engine')",
+                  "  pm.expect(body).to.have.property('region')",
+                  "  pm.expect(body).to.have.property('presets')",
+                  "  pm.expect(body).to.have.property('languageOptions')",
+                  "  pm.expect(body).to.have.property('sampleRate')",
+                  "  pm.expect(body).to.have.property('chunkMs')",
+                  "})",
+                  "",
+                  "pm.test('engine 是 auto/aws/mock 之一', () => {",
+                  "  pm.expect(['auto', 'aws', 'mock']).to.include(body.engine)",
+                  "})",
+                  "",
+                  "// Constitution: AWS region 限 us-east-1 或 us-west-2",
+                  "pm.test('[Constitution] region 在允許清單內', () => {",
+                  "  pm.expect(['us-east-1', 'us-west-2']).to.include(body.region)",
+                  "})",
+                  "",
+                  "pm.test('sampleRate 是 16000（前端 worklet 寫死這個值）', () => {",
+                  "  pm.expect(body.sampleRate).to.eql(16000)",
+                  "})",
+                  "",
+                  "pm.test('presets 非空陣列', () => {",
+                  "  pm.expect(body.presets).to.be.an('array').that.is.not.empty",
+                  "})",
+                  "",
+                  "pm.test('languageOptions 非空陣列', () => {",
+                  "  pm.expect(body.languageOptions).to.be.an('array').that.is.not.empty",
+                  "})",
+                  "",
+                  "// 這支端點的 docstring 明說不含憑證資訊",
+                  "pm.test('[Security] 沒有洩漏憑證欄位', () => {",
+                  "  const leaked = Object.keys(body).filter((k) => /secret|password|token|accesskey|credential/i.test(k))",
+                  "  pm.expect(leaked, `外洩欄位: ${leaked}`).to.be.empty",
+                  "})",
+                  "",
+                  "pm.collectionVariables.set('preset', body.presets[0])",
+                  "pm.collectionVariables.set('lang', body.languageOptions[0])"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/aws-config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/aws-config",
+              "host": ["{{base_url}}"],
+              "path": ["api", "aws-config"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('回傳 200', () => pm.response.to.have.status(200))",
+                  "",
+                  "const body = pm.response.json()",
+                  "",
+                  "pm.test('Secrets Manager 讀取沒有失敗', () => {",
+                  "  pm.expect(body.error, `後端回報: ${body.error}`).to.be.undefined",
+                  "})",
+                  "",
+                  "// 這支端點只該回傳非敏感設定，絕不能出現金鑰",
+                  "pm.test('[Security] 沒有任何金鑰欄位', () => {",
+                  "  const raw = JSON.stringify(body)",
+                  "  pm.expect(raw, 'AWS access key 樣式').to.not.match(/AKIA[0-9A-Z]{16}/)",
+                  "  pm.expect(raw, 'secretAccessKey').to.not.match(/secretAccessKey/i)",
+                  "  const leaked = Object.keys(body).filter((k) => /secret|password|accesskey|sessiontoken/i.test(k))",
+                  "  pm.expect(leaked, `外洩欄位: ${leaked}`).to.be.empty",
+                  "})",
+                  "",
+                  "pm.test('[Constitution] region 在允許清單內', () => {",
+                  "  pm.expect(['us-east-1', 'us-west-2']).to.include(body.region)",
+                  "})",
+                  "",
+                  "pm.test('identityPoolId 有值且格式正確', () => {",
+                  "  pm.expect(body.identityPoolId, 'Cognito Identity Pool 未設定').to.be.a('string').that.is.not.empty",
+                  "  pm.expect(body.identityPoolId).to.match(/^[a-z]{2}-[a-z]+-\\d:[0-9a-f-]{36}$/)",
+                  "})",
+                  "",
+                  "// 前端 RAG 問答需要這兩個，空值代表 Bedrock KB 還沒接上",
+                  "pm.test('Bedrock Knowledge Base 已設定', () => {",
+                  "  pm.expect(body.knowledgeBaseId, 'VITE_BEDROCK_KB_ID 是空的').to.be.a('string').that.is.not.empty",
+                  "})",
+                  "",
+                  "pm.test('Bedrock model ARN 已設定', () => {",
+                  "  pm.expect(body.modelArn, 'VITE_BEDROCK_MODEL_ARN 是空的').to.be.a('string').that.is.not.empty",
+                  "})",
+                  "",
+                  "pm.test('DynamoDB 表名已設定', () => {",
+                  "  pm.expect(body.tableName).to.be.a('string').that.is.not.empty",
+                  "})"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CORS",
+      "item": [
+        {
+          "name": "Preflight OPTIONS /api/config (允許的 Origin)",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              { "key": "Origin", "value": "{{allowed_origin}}" },
+              { "key": "Access-Control-Request-Method", "value": "GET" },
+              { "key": "Access-Control-Request-Headers", "value": "content-type" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/config",
+              "host": ["{{base_url}}"],
+              "path": ["api", "config"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('preflight 不該回 405（405 = CORSMiddleware 沒生效）', () => {",
+                  "  pm.expect(pm.response.code).to.not.eql(405)",
+                  "})",
+                  "",
+                  "pm.test('preflight 回 200', () => pm.response.to.have.status(200))",
+                  "",
+                  "pm.test('有 Access-Control-Allow-Origin', () => {",
+                  "  pm.expect(pm.response.headers.get('access-control-allow-origin')).to.eql(pm.collectionVariables.get('allowed_origin'))",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/config (允許的 Origin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Origin", "value": "{{allowed_origin}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/config",
+              "host": ["{{base_url}}"],
+              "path": ["api", "config"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('回傳 200', () => pm.response.to.have.status(200))",
+                  "",
+                  "pm.test('白名單 Origin 拿到 ACAO header', () => {",
+                  "  pm.expect(pm.response.headers.get('access-control-allow-origin')).to.eql(pm.collectionVariables.get('allowed_origin'))",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/config (不允許的 Origin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Origin", "value": "{{disallowed_origin}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/config",
+              "host": ["{{base_url}}"],
+              "path": ["api", "config"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[Security] 非白名單 Origin 不得拿到 ACAO', () => {",
+                  "  const acao = pm.response.headers.get('access-control-allow-origin')",
+                  "  pm.expect(acao, `不該回 ${acao}`).to.be.oneOf([null, undefined])",
+                  "})",
+                  "",
+                  "pm.test('[Security] 不得回 ACAO: *', () => {",
+                  "  pm.expect(pm.response.headers.get('access-control-allow-origin')).to.not.eql('*')",
+                  "})"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Security",
+      "item": [
+        {
+          "name": "GET /docs (應關閉)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/docs", "host": ["{{base_url}}"], "path": ["docs"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[Security] Swagger UI 已關閉 (docs_url=None)', () => {",
+                  "  pm.expect(pm.response.code).to.eql(404)",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /redoc (應關閉)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/redoc", "host": ["{{base_url}}"], "path": ["redoc"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[Security] ReDoc 已關閉 (redoc_url=None)', () => {",
+                  "  pm.expect(pm.response.code).to.eql(404)",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /static/../.env (路徑穿越)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/static/..%2F.env",
+              "host": ["{{base_url}}"],
+              "path": ["static", "..%2F.env"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[Security] 不得讀到 .env', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 403, 404])",
+                  "})",
+                  "",
+                  "pm.test('[Security] 回應中沒有 AWS 金鑰樣式', () => {",
+                  "  pm.expect(pm.response.text()).to.not.match(/AKIA[0-9A-Z]{16}/)",
+                  "})"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
