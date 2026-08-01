@@ -4,10 +4,11 @@ import { hasAuthenticatedCognitoLogin } from './lib/credentials'
 import { CaregiverDashboardPage } from './pages/CaregiverDashboardPage'
 import { ChatPage } from './pages/ChatPage'
 import { ElderManagementPage } from './pages/ElderManagementPage'
+import { LiveCaptionPage } from './pages/LiveCaptionPage'
 import { PersonaSelectionPage } from './pages/PersonaSelectionPage'
 import { type ConversationRecord, type ElderSubject } from './types/care'
 
-type Page = 'chat' | 'dashboard' | 'elders' | 'persona'
+type Page = 'chat' | 'dashboard' | 'elders' | 'persona' | 'caption'
 
 const INITIAL_ELDERS: ElderSubject[] = [
   { id: 'demo-elder-001', displayName: '合成示範個案 A' },
@@ -95,6 +96,14 @@ function App() {
             >
               照護總覽
             </button>
+            <button
+              aria-current={page === 'caption' ? 'page' : undefined}
+              className={`rounded-lg px-3 py-2 text-sm font-semibold ${page === 'caption' ? 'bg-teal-700 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+              onClick={() => setPage('caption')}
+              type="button"
+            >
+              即時字幕
+            </button>
           </nav>
         </div>
       </header>
@@ -138,6 +147,7 @@ function App() {
             records={records}
           />
         ) : null}
+        {page === 'caption' ? <LiveCaptionPage /> : null}
       </div>
     </div>
   )
