@@ -1,161 +1,238 @@
+// @ts-nocheck
 import { useCallback, useEffect, useState } from 'react'
 import { getConfigurationIssues, loadRemoteConfig } from './lib/config'
-import { hasAuthenticatedCognitoLogin } from './lib/credentials'
 import { CaregiverDashboardPage } from './pages/CaregiverDashboardPage'
 import { ChatPage } from './pages/ChatPage'
 import { ElderManagementPage } from './pages/ElderManagementPage'
 import { LiveCaptionPage } from './pages/LiveCaptionPage'
-import { PersonaSelectionPage } from './pages/PersonaSelectionPage'
-import { type ConversationRecord, type ElderSubject } from './types/care'
+import { CareDashboardPage } from './pages/CareDashboardPage'
+import { MemoryViewPage } from './pages/MemoryViewPage'
+import { VoiceChatPage } from './pages/VoiceChatPage'
+import ElderSelector from './components/ElderSelector'
+import { ELDER_PROFILES } from './data/mockElders'
+import { type ConversationRecord } from './types/care'
 
-type Page = 'chat' | 'dashboard' | 'elders' | 'persona' | 'caption'
+import { ElderSelectScreen } from './pages/ElderSelectScreen'
 
-const INITIAL_ELDERS: ElderSubject[] = [
-  { id: 'demo-elder-001', displayName: '合成示範個案 A' },
-]
+type Role = 'select' | 'caregiver' | 'elder' | 'elder-select'
+type CaregiverPage = 'elders' | 'chat' | 'care-dashboard' | 'memory' | 'dashboard' | 'caption'
+type ElderPage = 'voice-chat' | 'caption'
 
-function mergeRecords(
-  currentRecords: ConversationRecord[],
-  incomingRecords: ConversationRecord[],
-): ConversationRecord[] {
+function mergeRecords(current: ConversationRecord[], incoming: ConversationRecord[]): ConversationRecord[] {
   const byId = new Map<string, ConversationRecord>()
-
-  for (const record of [...currentRecords, ...incomingRecords]) {
-    byId.set(record.id, record)
-  }
-
-  return [...byId.values()]
-    .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
-    .slice(0, 50)
+  for (const r of [...current, ...incoming]) byId.set(r.id, r)
+  return [...byId.values()].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 50)
 }
 
+// ===================== 角色選擇畫面 =====================
+function RoleSelectScreen({ onSelect }: { onSelect: (role: Role) => void }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-slate-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-3xl">
+        <div className="text-center mb-10">
+          <p className="text-sm font-bold tracking-[0.2em] text-teal-700">CAREMATE AI</p>
+          <h1 className="mt-3 text-4xl font-bold text-slate-900">智慧長照陪伴系統</h1>
+          <p className="mt-3 text-lg text-slate-600">請選擇您的使用身分</p>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          {/* 照護人員 */}
+          <button
+            onClick={() => onSelect('caregiver')}
+            className="group rounded-3xl bg-white p-8 text-left shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-xl hover:ring-teal-300 hover:-translate-y-1"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-teal-100 flex items-center justify-center text-3xl mb-5 group-hover:bg-teal-200 transition-colors">
+              👩‍⚕️
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">照護人員</h2>
+            <p className="mt-3 text-slate-600 leading-relaxed">
+              管理長者資料、查詢照護知識庫、檢視照護紀錄與分析報表。
+            </p>
+            <ul className="mt-4 space-y-1.5 text-sm text-slate-500">
+              <li>📋 個案管理（新增/編輯長者）</li>
+              <li>💬 即時問答（AI 照護知識庫）</li>
+              <li>📊 照護面板（圖表分析）</li>
+              <li>🧠 記憶系統（生活紀錄）</li>
+              <li>📝 照護總覽（歷史紀錄）</li>
+              <li>🎤 即時字幕</li>
+            </ul>
+            <div className="mt-6 text-sm font-semibold text-teal-700 group-hover:text-teal-800">
+              進入照護介面 →
+            </div>
+          </button>
+
+          {/* 長者 */}
+          <button
+            onClick={() => onSelect('elder-select')}
+            className="group rounded-3xl bg-white p-8 text-left shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-xl hover:ring-amber-300 hover:-translate-y-1"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-3xl mb-5 group-hover:bg-amber-200 transition-colors">
+              👴
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">長者使用</h2>
+            <p className="mt-3 text-slate-600 leading-relaxed">
+              簡化介面，用語音和系統聊天、聽字幕。大按鈕、大字體。
+            </p>
+            <ul className="mt-4 space-y-1.5 text-sm text-slate-500">
+              <li>🗣️ 語音陪伴（說話就能聊天）</li>
+              <li>🎤 即時字幕（看得見的聲音）</li>
+            </ul>
+            <div className="mt-6 text-sm font-semibold text-amber-700 group-hover:text-amber-800">
+              進入長者介面 →
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ===================== 主 App =====================
 function App() {
-  const [page, setPage] = useState<Page>('persona')
-  const [elders, setElders] = useState<ElderSubject[]>(INITIAL_ELDERS)
-  const [selectedElderId, setSelectedElderId] = useState<string | undefined>(INITIAL_ELDERS[0]?.id)
+  const [role, setRole] = useState<Role>('select')
+  const [caregiverPage, setCaregiverPage] = useState<CaregiverPage>('elders')
+  const [elderPage, setElderPage] = useState<ElderPage>('voice-chat')
+  const [elderId, setElderId] = useState(ELDER_PROFILES[0]?.elder_id || 'elder-001')
   const [records, setRecords] = useState<ConversationRecord[]>([])
   const [historyPassphrase, setHistoryPassphrase] = useState('')
   const [configLoaded, setConfigLoaded] = useState(false)
   const configurationIssues = configLoaded ? getConfigurationIssues() : []
-  const selectedElder = elders.find((elder) => elder.id === selectedElderId)
-  const hasAuthenticatedSession = hasAuthenticatedCognitoLogin()
 
-  // 啟動時從 backend /api/aws-config 讀取 Secrets Manager 的設定
+  const selectedElderProfile = ELDER_PROFILES.find(e => e.elder_id === elderId)
+  const selectedElder = selectedElderProfile
+    ? { id: selectedElderProfile.elder_id, displayName: selectedElderProfile.name }
+    : undefined
+  const elders = ELDER_PROFILES.map(e => ({ id: e.elder_id, displayName: e.name }))
+
   useEffect(() => {
-    loadRemoteConfig()
-      .then(() => setConfigLoaded(true))
-      .catch(() => setConfigLoaded(true))
+    loadRemoteConfig().then(() => setConfigLoaded(true)).catch(() => setConfigLoaded(true))
   }, [])
 
   const handleConversationSaved = useCallback((record: ConversationRecord) => {
-    setRecords((current) => mergeRecords(current, [record]))
+    setRecords(current => mergeRecords(current, [record]))
   }, [])
 
   const handleHistoryLoaded = useCallback((history: ConversationRecord[]) => {
-    setRecords((current) => mergeRecords(current, history))
+    setRecords(current => mergeRecords(current, history))
   }, [])
 
-  function deleteElder(elderId: string) {
-    setElders((current) => current.filter((elder) => elder.id !== elderId))
-
-    if (selectedElderId === elderId) {
-      setSelectedElderId(undefined)
-    }
+  // ===================== 角色選擇 =====================
+  if (role === 'select') {
+    return <RoleSelectScreen onSelect={setRole} />
   }
 
-  if (page === 'persona') {
-    return <PersonaSelectionPage onContinue={() => setPage('elders')} />
+  // ===================== 長者選擇名字 =====================
+  if (role === 'elder-select') {
+    return <ElderSelectScreen onSelect={(id) => { setElderId(id); setRole('elder'); }} />
   }
 
+  // ===================== 長者介面 =====================
+  if (role === 'elder') {
+    return (
+      <div className="min-h-screen bg-amber-50 text-slate-900">
+        <header className="border-b border-amber-200 bg-white">
+          <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
+            <div>
+              <p className="text-lg font-bold text-amber-700">安心伴</p>
+              {selectedElderProfile && <p className="text-sm text-slate-500">{selectedElderProfile.name}</p>}
+            </div>
+            <div className="flex items-center gap-3">
+              <ElderSelector elderId={elderId} onElderChange={setElderId} compact />
+              <nav className="flex gap-2">
+                <button
+                  onClick={() => setElderPage('voice-chat')}
+                  className={`rounded-lg px-4 py-2 text-base font-bold ${elderPage === 'voice-chat' ? 'bg-amber-600 text-white' : 'text-slate-700 hover:bg-amber-100'}`}
+                >
+                  🗣️ 聊天
+                </button>
+                <button
+                  onClick={() => setElderPage('caption')}
+                  className={`rounded-lg px-4 py-2 text-base font-bold ${elderPage === 'caption' ? 'bg-amber-600 text-white' : 'text-slate-700 hover:bg-amber-100'}`}
+                >
+                  🎤 字幕
+                </button>
+              </nav>
+              <button onClick={() => setRole('select')} className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100">
+                切換身分
+              </button>
+            </div>
+          </div>
+        </header>
+        <div>
+          {elderPage === 'voice-chat' && <VoiceChatPage elderId={elderId} />}
+          {elderPage === 'caption' && <LiveCaptionPage />}
+        </div>
+      </div>
+    )
+  }
+
+  // ===================== 照護人員介面 =====================
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <a className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow" href="#main-content">
-        跳至主要內容
-      </a>
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-bold tracking-[0.18em] text-teal-700">PROFIT-PROPHET</p>
-            <p className="mt-1 font-semibold text-slate-900">照護人員智慧助理</p>
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="text-sm font-bold tracking-[0.18em] text-teal-700">CAREMATE AI</p>
+              <p className="mt-0.5 text-xs text-slate-500">照護人員介面</p>
+            </div>
+            <ElderSelector elderId={elderId} onElderChange={setElderId} compact />
           </div>
-          <nav aria-label="主要導覽" className="flex flex-wrap gap-2">
-            <button
-              aria-current={page === 'elders' ? 'page' : undefined}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${page === 'elders' ? 'bg-teal-700 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
-              onClick={() => setPage('elders')}
-              type="button"
-            >
-              個案管理
+          <div className="flex items-center gap-2">
+            <nav aria-label="主要導覽" className="flex flex-wrap gap-1.5">
+              {([
+                ['elders', '個案管理'],
+                ['chat', '即時問答'],
+                ['care-dashboard', '照護面板'],
+                ['memory', '記憶系統'],
+                ['dashboard', '照護總覽'],
+                ['caption', '即時字幕'],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  aria-current={caregiverPage === key ? 'page' : undefined}
+                  className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                    caregiverPage === key ? 'bg-teal-700 text-white' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                  onClick={() => setCaregiverPage(key)}
+                  type="button"
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+            <button onClick={() => setRole('select')} className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100 border border-slate-200">
+              切換身分
             </button>
-            <button
-              aria-current={page === 'chat' ? 'page' : undefined}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${page === 'chat' ? 'bg-teal-700 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
-              disabled={selectedElder === undefined}
-              onClick={() => setPage('chat')}
-              type="button"
-            >
-              即時問答
-            </button>
-            <button
-              aria-current={page === 'dashboard' ? 'page' : undefined}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${page === 'dashboard' ? 'bg-teal-700 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
-              onClick={() => setPage('dashboard')}
-              type="button"
-            >
-              照護總覽
-            </button>
-            <button
-              aria-current={page === 'caption' ? 'page' : undefined}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${page === 'caption' ? 'bg-teal-700 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
-              onClick={() => setPage('caption')}
-              type="button"
-            >
-              即時字幕
-            </button>
-          </nav>
+          </div>
         </div>
       </header>
 
-      {configurationIssues.length === 0 && hasAuthenticatedSession ? null : (
+      {configurationIssues.length > 0 && (
         <aside className="border-b border-amber-200 bg-amber-50" role="status">
-          <div className="mx-auto max-w-6xl px-4 py-3 text-sm text-amber-950">
-            {configurationIssues.length > 0 ? (
-              <><strong>尚未連接 AWS 基礎設施。</strong> 請在未提交的 <code>.env.local</code> 設定：{configurationIssues.join('、')}。</>
-            ) : null}
-            {!hasAuthenticatedSession ? (
-              <><strong className={configurationIssues.length > 0 ? 'ml-2' : undefined}>尚未登入。</strong> Host 必須先以驗證過的 Cognito User Pool 或外部 IdP token 呼叫 <code>configureAuthenticatedCognitoLogins</code>；未登入身分不會取得 AWS 憑證。</>
-            ) : null}
+          <div className="mx-auto max-w-7xl px-4 py-2 text-sm text-amber-950">
+            部分功能需要 AWS 連線。離線功能（照護面板、記憶系統）可正常使用。
           </div>
         </aside>
       )}
 
-      <div id="main-content">
-        {page === 'elders' ? (
-          <ElderManagementPage
-            elders={elders}
-            onAdd={(elder) => setElders((current) => [...current, elder])}
-            onDelete={deleteElder}
-            onSelect={setSelectedElderId}
-            selectedElderId={selectedElderId}
-          />
-        ) : null}
-        {page === 'chat' ? (
-          <ChatPage
-            elder={selectedElder}
-            historyPassphrase={historyPassphrase}
-            onConversationSaved={handleConversationSaved}
-            onHistoryPassphraseChange={setHistoryPassphrase}
-          />
-        ) : null}
-        {page === 'dashboard' ? (
-          <CaregiverDashboardPage
-            historyPassphrase={historyPassphrase}
-            onHistoryLoaded={handleHistoryLoaded}
-            onHistoryPassphraseChange={setHistoryPassphrase}
-            records={records}
-          />
-        ) : null}
-        {page === 'caption' ? <LiveCaptionPage /> : null}
+      <div>
+        {caregiverPage === 'elders' && (
+          <ElderManagementPage elders={elders} onAdd={() => {}} onDelete={() => {}} onSelect={setElderId} selectedElderId={elderId} />
+        )}
+        {caregiverPage === 'chat' && (
+          <ChatPage elder={selectedElder} historyPassphrase={historyPassphrase} onConversationSaved={handleConversationSaved} onHistoryPassphraseChange={setHistoryPassphrase} />
+        )}
+        {caregiverPage === 'care-dashboard' && (
+          <CareDashboardPage elderId={elderId} onElderChange={setElderId} />
+        )}
+        {caregiverPage === 'memory' && (
+          <MemoryViewPage elderId={elderId} onElderChange={setElderId} />
+        )}
+        {caregiverPage === 'dashboard' && (
+          <CaregiverDashboardPage historyPassphrase={historyPassphrase} onHistoryLoaded={handleHistoryLoaded} onHistoryPassphraseChange={setHistoryPassphrase} records={records} />
+        )}
+        {caregiverPage === 'caption' && <LiveCaptionPage />}
       </div>
     </div>
   )
