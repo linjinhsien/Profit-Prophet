@@ -1,7 +1,7 @@
 task:
   id: "TASK-005"
-  title: "US1 語音對話 UI：ChatBubble / ChatHistory / VoiceButton + ChatPage 多輪重構"
-  issue: null                      # 建立 Issue 後填入實際編號
+  title: "US1 語音對話 UI：ChatBubble / ChatHistory / VoiceButton + ChatPage 多輪?��?"
+  issue: 11                      # 建�? Issue 後填?�實?�編??
   worktree: "feature-us1-voice-chat"
   assigned_to: null
 
@@ -10,15 +10,15 @@ task:
     spec_tasks: ["T007", "T008", "T009", "T010", "T011", "T012"]
     ui_contract: "specs/004-voice-chat-care-record/contracts/ui-contracts.md"
     audit: "docs/compliance/audit-report-2026-08-01.md"
-    findings: ["C-1"]              # 免責聲明覆蓋率
-    depends_on: ["TASK-003"]       # 需要 useConversation hook 與 conversation 型別
+    findings: ["C-1"]              # ?�責?��?覆�???
+    depends_on: ["TASK-003"]       # ?��?useConversation hook ??conversation ?�別
 
   output:
     code:
-      - "frontend/src/components/ChatBubble.tsx"    # 新建
-      - "frontend/src/components/ChatHistory.tsx"   # 新建
-      - "frontend/src/components/VoiceButton.tsx"   # 新建
-      - "frontend/src/pages/ChatPage.tsx"           # 重構
+      - "frontend/src/components/ChatBubble.tsx"    # ?�建
+      - "frontend/src/components/ChatHistory.tsx"   # ?�建
+      - "frontend/src/components/VoiceButton.tsx"   # ?�建
+      - "frontend/src/pages/ChatPage.tsx"           # ?��?
     tests:
       - "frontend/src/components/ChatBubble.test.tsx"
     config: []
@@ -26,69 +26,69 @@ task:
   subtasks:
     - id: "T1"
       spec_task: "T007 + T011"
-      title: "ChatBubble：單則訊息泡泡"
+      title: "ChatBubble：單?��??�泡�?
       detail: >
-        role 決定對齊（user 靠右 teal、assistant 靠左 white）、timestamp 用
-        TASK-003 的 formatTime、assistant 訊息帶 CareEventBadge 與播放語音鈕。
-        免責聲明併在此處實作，不另立子任務 —— 寫在元件內才能保證 100% 覆蓋。
+        role 決�?對�?（user ?�右 teal?�assistant ?�左 white）、timestamp ??
+        TASK-003 ??formatTime?�assistant 訊息�?CareEventBadge ?�播?��??��???
+        ?�責?��?併在此�?實�?，�??��?子任???��?寫在?�件?��??��?�?100% 覆�???
       blocks: ["T4"]
     - id: "T2"
       spec_task: "T008"
-      title: "ChatHistory：可滾動訊息列表"
-      detail: "auto-scroll 到最新、loading 指示、空狀態。"
+      title: "ChatHistory：可滾�?訊息?�表"
+      detail: "auto-scroll ?��??�、loading ?�示?�空?�?��?
       blocks: ["T4"]
     - id: "T3"
       spec_task: "T009"
-      title: "VoiceButton：麥克風按鈕與狀態指示"
+      title: "VoiceButton：麥?�風?��??��??��?�?
       detail: >
-        包裝現有 useVoiceInput（回傳 status / transcript / interimTranscript /
-        isSupported / start / stop / errorMessage）。status 有四種：
-        idle / listening / permission-denied / error，四種都要有對應視覺與文字。
+        ?��??��? useVoiceInput（�???status / transcript / interimTranscript /
+        isSupported / start / stop / errorMessage）。status ?��?種�?
+        idle / listening / permission-denied / error，�?種都要�?對�?視覺?��?字�?
       blocks: ["T4"]
     - id: "T4"
       spec_task: "T010 + T012"
-      title: "ChatPage 改為多輪"
+      title: "ChatPage ?�為多輪"
       detail: >
-        以 useConversation 取代單一 answer 狀態，並把語音轉錄接進 sendMessage。
-        現況 11 個 useState 中，answer / selectedCandidate / audioUrl 三個是
-        綁定「唯一那則回覆」的單例，需改為隨訊息走。
-        加密 fieldset 與合成資料確認 checkbox 必須保留。
+        �?useConversation ?�代?��? answer ?�?��?並�?語音轉�??��?sendMessage??
+        ?��? 11 ??useState 中�?answer / selectedCandidate / audioUrl 三個是
+        綁�??�唯一????��??��??��?，�??�為?��??�走??
+        ?��? fieldset ?��??��??�確�?checkbox 必�?保�???
 
   acceptance_criteria:
-    - "npx tsc -b --noEmit 零錯誤"
-    - "npm run lint 零錯誤"
-    - "npm run test 通過"
-    - "每一則 assistant 訊息都渲染免責聲明，無條件分支可繞過（對應 spec SC-006 的 100%）"
-    - "多輪對話中先前訊息不會消失，送出新問題後歷史仍在"
-    - "麥克風權限被拒時 VoiceButton 顯示對應訊息，且文字輸入仍可用"
-    - "voice.status 四種狀態各有可辨識的視覺呈現"
-    - "Polly 失敗時降級為純文字，不阻擋對話繼續"
-    - "加密 fieldset 與合成資料確認 checkbox 行為未被破壞"
-    - "ChatBubble 有單元測試涵蓋 user/assistant 兩種 role 與免責聲明存在性"
-    - "訊息列表可用鍵盤瀏覽，新訊息透過 aria-live 通報"
+    - "npx tsc -b --noEmit ?�錯�?
+    - "npm run lint ?�錯�?
+    - "npm run test ?��?"
+    - "每�???assistant 訊息?�渲?��?責聲?��??��?件�??�可繞�?（�???spec SC-006 ??100%�?
+    - "多輪對話中�??��??��??��?失�??�出?��?題�?歷史仍在"
+    - "麥�?風�??�被?��? VoiceButton 顯示對�?訊息，�??��?輸入仍可??
+    - "voice.status ?�種?�?��??�可辨�??��?覺�???
+    - "Polly 失�??��?級為純�?字�?不阻?��?話繼�?
+    - "?��? fieldset ?��??��??�確�?checkbox 行為?�被?��?"
+    - "ChatBubble ?�單?�測試涵??user/assistant ?�種 role ?��?責聲?��??��?
+    - "訊息?�表?�用?�盤?�覽，新訊息?��? aria-live ?�報"
 
   out_of_scope:
-    - "照護紀錄頁面（TASK-006）"
-    - "文字輸入框的送出與重設按鈕（TASK-007，避免與本任務同時改 ChatPage）"
-    - "篩選搜尋（TASK-008）"
+    - "?�護紀?��??��?TASK-006�?
+    - "?��?輸入框�??�出?��?設�??��?TASK-007，避?��??�任?��??�改 ChatPage�?
+    - "篩選?��?（TASK-008�?
 
   review_gate: "full_review"
-  # 理由：這是 MVP 的主要使用者路徑，且免責聲明屬合規要求（SECURITY-RULES 8），
-  # 需同時看架構一致性與合規覆蓋，不只看安全
+  # ?�由：這是 MVP ?�主要使?�者路徑�?且�?責聲?�屬?��?要�?（SECURITY-RULES 8）�?
+  # ?�?��??�架構�??�性�??��?覆�?，�??��?安全
 
   blocking_decisions:
-    - question: "轉錄完成後要自動送出，還是只填入輸入框等使用者確認"
-      impacts: "T4 的 sendMessage 觸發時機"
+    - question: "轉�?完�?後�??��??�出，�??�只填入輸入框�?使用?�確�?
+      impacts: "T4 ??sendMessage 觸發?��?"
       why_blocking: >
-        spec T012 寫「auto-populate or auto-send」兩種都可以，但選自動送出
-        會讓 Transcribe 誤判直接進 Bedrock，既花錢又可能產生錯誤照護建議。
+        spec T012 寫「auto-populate or auto-send?�兩種都?�以，�??�自?�送出
+        ?��? Transcribe 誤判?�接??Bedrock，既?�錢?�可?�產?�錯誤照護建議�?
       recommendation: >
-        建議只填入輸入框讓使用者確認後再送。現況 ChatPage 已是這個行為
-        （「使用轉錄文字」按鈕），保留即可，改動最小且對照護場域較安全。
+        建議?�填?�輸?��?讓使?�者確認�??�送。現�?ChatPage 已是?�個�???
+        （「使?��??��?字」�??��?，�??�即?��??��??�小�?對照護場?��?安全??
 
   notes: >
-    可與 TASK-006 並行 —— 兩者改不同頁面。但兩者都會碰 ChatBubble
-    （TASK-006 的 T019 展開明細要重用），所以 ChatBubble 的 props 介面
-    需在本任務先定案，TASK-006 只消費不修改。
+    ?��? TASK-006 並�? ?��??�者改不�??�面?��??�者都?�碰 ChatBubble
+    （TASK-006 ??T019 展�??�細要�??��?，�?�?ChatBubble ??props 介面
+    ?�?�本任�??��?案�?TASK-006 ?��?費�?修改??
 
   status: "pending"

@@ -1,7 +1,7 @@
 task:
   id: "TASK-006"
-  title: "US3 照護紀錄瀏覽：RecordCard / useCareRecords + Dashboard 重構"
-  issue: null                      # 建立 Issue 後填入實際編號
+  title: "US3 ?�護紀?�瀏覽：RecordCard / useCareRecords + Dashboard ?��?"
+  issue: 12                      # 建�? Issue 後填?�實?�編??
   worktree: "feature-us3-care-records"
   assigned_to: null
 
@@ -9,15 +9,15 @@ task:
     spec: "specs/004-voice-chat-care-record/tasks.md"
     spec_tasks: ["T016", "T017", "T018", "T019", "T020"]
     audit: "docs/compliance/audit-report-2026-08-01.md"
-    findings: ["C-1"]              # Dashboard 目前直接渲染 record.answer 無免責聲明
-    depends_on: ["TASK-003"]       # 需要 conversationId 分組與修好的歷史查詢
+    findings: ["C-1"]              # Dashboard ?��??�接渲�? record.answer ?��?責聲??
+    depends_on: ["TASK-003"]       # ?��?conversationId ?��??�修好�?歷史?�詢
 
   output:
     code:
-      - "frontend/src/components/RecordCard.tsx"          # 新建
-      - "frontend/src/lib/useCareRecords.ts"              # 新建
-      - "frontend/src/pages/CaregiverDashboardPage.tsx"   # 重構
-      - "frontend/src/App.tsx"                            # 導覽標籤與 props
+      - "frontend/src/components/RecordCard.tsx"          # ?�建
+      - "frontend/src/lib/useCareRecords.ts"              # ?�建
+      - "frontend/src/pages/CaregiverDashboardPage.tsx"   # ?��?
+      - "frontend/src/App.tsx"                            # 導覽標籤??props
     tests:
       - "frontend/src/lib/useCareRecords.test.ts"
     config: []
@@ -27,73 +27,73 @@ task:
       spec_task: "T017"
       title: "useCareRecords hook"
       detail: >
-        載入歷史 → 解密 → 依 conversationId 分組 → 導出 CareRecord view model。
-        現況的載入邏輯在 Dashboard 的 useEffect 內（依賴陣列
-        [canLoadHistory, historyPassphrase, onHistoryLoaded]），需搬進 hook。
-        注意 App.tsx 的 mergeRecords 已做 id 去重 + timestamp 倒序 + slice(0,50)，
-        搬移時不要造成雙重截斷。
+        載入歷史 ??�?? ??�?conversationId ?��? ??導出 CareRecord view model??
+        ?��??��??��?輯在 Dashboard ??useEffect ?��?依賴???
+        [canLoadHistory, historyPassphrase, onHistoryLoaded]）�??�?��?hook??
+        注�? App.tsx ??mergeRecords 已�? id ?��? + timestamp ?��? + slice(0,50)�?
+        ?�移?��?要造�??��??�斷??
       blocks: ["T3"]
     - id: "T2"
       spec_task: "T016"
-      title: "RecordCard：紀錄摘要卡片"
+      title: "RecordCard：�??��?要卡??
       detail: >
-        分類標籤、時間、訊息數、摘要節錄、可收合展開。
-        assistant 內容一旦顯示就必須帶免責聲明（現況 Dashboard 直接渲染
-        record.answer 無任何標記，這是 audit C-1）。
+        ?��?標籤?��??�、�??�數?��?要�??�、可?��?展�???
+        assistant ?�容一?�顯示就必�?帶�?責聲?��??��? Dashboard ?�接渲�?
+        record.answer ?�任何�?記�??�是 audit C-1）�?
       blocks: ["T3"]
     - id: "T3"
       spec_task: "T018"
-      title: "Dashboard 改為紀錄瀏覽頁"
+      title: "Dashboard ?�為紀?�瀏覽??
       detail: >
-        改用 useCareRecords + RecordCard 列表。
-        現有的分類篩選（filter 狀態 + CARE_EVENTS 按鈕群 + filteredRecords
-        useMemo）已經可用，本任務不得移除，TASK-008 會在其上擴充關鍵字搜尋。
-        解鎖通關碼的 section 需保留。
+        ?�用 useCareRecords + RecordCard ?�表??
+        ?��??��?類篩?��?filter ?�??+ CARE_EVENTS ?��?�?+ filteredRecords
+        useMemo）已經可?��??�任?��?得移?��?TASK-008 ?�在?��??��??�鍵字�?尋�?
+        �???��?碼�? section ?�保�???
       blocks: ["T4"]
     - id: "T4"
       spec_task: "T019 + T020"
-      title: "展開明細與導覽標籤"
+      title: "展�??�細?��?覽�?�?
       detail: >
-        展開時以 TASK-005 定義的 ChatBubble 呈現完整訊息列表（只消費不修改）。
-        App.tsx 導覽第三顆按鈕的文字由「照護總覽」改為「照護紀錄」，
-        頁面 header 的 kicker 與 h1 一併對齊。
+        展�??�以 TASK-005 定義??ChatBubble ?�現完整訊息?�表（只消費不修?��???
+        App.tsx 導覽第�?顆�??��??��??�「照護總覽」改?�「照護�??�」�?
+        ?�面 header ??kicker ??h1 一併�?齊�?
 
   acceptance_criteria:
-    - "npx tsc -b --noEmit 零錯誤"
-    - "npm run lint 零錯誤"
-    - "npm run test 通過"
-    - "RecordCard 顯示 AI 內容時必定帶免責聲明，補齊 audit C-1"
-    - "同一 conversationId 的多輪訊息被歸為一張卡片，而非多張"
-    - "紀錄依時間倒序排列"
-    - "既有的分類篩選功能維持可用，8 個分類加「全部」共 9 顆按鈕行為不變"
-    - "解鎖通關碼 section 行為不變，未達 12 字元時不觸發遠端讀取"
-    - "展開/收合可用鍵盤操作，展開狀態透過 aria-expanded 表達"
-    - "useCareRecords 有單元測試涵蓋 conversationId 分組與空歷史"
-    - "導覽與頁面標題均顯示「照護紀錄」"
+    - "npx tsc -b --noEmit ?�錯�?
+    - "npm run lint ?�錯�?
+    - "npm run test ?��?"
+    - "RecordCard 顯示 AI ?�容?��?定帶?�責?��?，�?�?audit C-1"
+    - "?��? conversationId ?��?輪�??�被歸為一張卡?��??��?多張"
+    - "紀?��??��??��??��?"
+    - "?��??��?類篩?��??�維?�可?��?8 ?��?類�??�全?�」共 9 顆�??��??��?�?
+    - "�???��?�?section 行為不�?，未??12 字�??��?觸發?�端讀??
+    - "展�?/?��??�用?�盤?��?，�??��??�透�? aria-expanded 表�?"
+    - "useCareRecords ?�單?�測試涵??conversationId ?��??�空歷史"
+    - "導覽?��??��?題�?顯示?�照護�??��?
 
   out_of_scope:
-    - "ChatBubble 元件的實作或修改（TASK-005 負責，此處只消費）"
-    - "關鍵字搜尋與 debounce（TASK-008）"
-    - "RecordFilters 元件抽取（TASK-008）"
-    - "資料刪除能力（TASK-009）"
+    - "ChatBubble ?�件?�實作�?修改（TASK-005 負責，此?�只消費�?
+    - "?�鍵字�?尋�? debounce（TASK-008�?
+    - "RecordFilters ?�件?��?（TASK-008�?
+    - "資�??�除?��?（TASK-009�?
 
   review_gate: "security_review"
-  # 理由：此任務改動解密與歷史讀取路徑，需確認通關碼未外洩、
-  # 解密失敗的紀錄仍被靜默丟棄而非顯示亂碼
+  # ?�由：此任�??��?�???�歷?��??�路徑�??�確�??��?碼未外洩??
+  # �??失�??��??��?被�?默�?棄而�?顯示亂碼
 
   blocking_decisions:
-    - question: "CareRecord 的摘要要用第一則回覆節錄，還是另叫一次 Bedrock 產生摘要"
-      impacts: "T1 的 view model 導出邏輯，以及是否新增 API 呼叫"
+    - question: "CareRecord ?��?要�??�第一?��?覆�??��??�是?�叫一�?Bedrock ?��??��?"
+      impacts: "T1 ??view model 導出?�輯，以?�是?�新�?API ?�叫"
       why_blocking: >
-        另叫 Bedrock 會在瀏覽紀錄頁時產生額外費用，且 v2 無後端無法限流
-        （audit C-6），瀏覽行為觸發 LLM 呼叫會放大成本濫用風險。
+        ?�叫 Bedrock ?�在?�覽紀?��??�產?��?外費?��?�?v2 ?��?端無法�?�?
+        （audit C-6）�??�覽行為觸發 LLM ?�叫?�放大�??�濫?�風?��?
       recommendation: >
-        用既有 answer 欄位節錄，不新增 API 呼叫。
+        ?�既??answer 欄�?節?��?不新�?API ?�叫??
 
   notes: >
-    可與 TASK-005 並行 —— 改不同頁面。唯一交界是 ChatBubble，
-    需等 TASK-005 定案其 props 後才能做 T4。
-    T1 依賴 TASK-003 的 T5（歷史查詢排序修正）；若排序未修，
-    本頁在超過 50 筆後會顯示錯誤的資料集，US3 的驗收就失去意義。
+    ?��? TASK-005 並�? ?��??��??��??�。唯一交�???ChatBubble�?
+    ?��?TASK-005 定�???props 後�??��? T4??
+    T1 依賴 TASK-003 ??T5（歷?�查詢�?序修�??；若?��??�修�?
+    ?��??��???50 筆�??�顯示錯誤�?資�??��?US3 ?��??�就失去?�義??
 
   status: "pending"

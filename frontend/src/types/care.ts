@@ -46,6 +46,8 @@ export interface ConversationRecord extends CareAnswer {
   id: string
   queryText: string
   timestamp: string
+  /** Optional conversation session ID; absent for legacy single-message records. */
+  conversationId?: string
 }
 
 export interface ElderSubject {

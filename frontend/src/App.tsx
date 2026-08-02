@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { getConfigurationIssues } from './lib/config'
 import { hasAuthenticatedCognitoLogin } from './lib/credentials'
 import { CaregiverDashboardPage } from './pages/CaregiverDashboardPage'
@@ -93,7 +94,7 @@ function App() {
               onClick={() => setPage('dashboard')}
               type="button"
             >
-              照護總覽
+              照護紀錄
             </button>
           </nav>
         </div>
@@ -112,33 +113,35 @@ function App() {
         </aside>
       )}
 
-      <div id="main-content">
-        {page === 'elders' ? (
-          <ElderManagementPage
-            elders={elders}
-            onAdd={(elder) => setElders((current) => [...current, elder])}
-            onDelete={deleteElder}
-            onSelect={setSelectedElderId}
-            selectedElderId={selectedElderId}
-          />
-        ) : null}
-        {page === 'chat' ? (
-          <ChatPage
-            elder={selectedElder}
-            historyPassphrase={historyPassphrase}
-            onConversationSaved={handleConversationSaved}
-            onHistoryPassphraseChange={setHistoryPassphrase}
-          />
-        ) : null}
-        {page === 'dashboard' ? (
-          <CaregiverDashboardPage
-            historyPassphrase={historyPassphrase}
-            onHistoryLoaded={handleHistoryLoaded}
-            onHistoryPassphraseChange={setHistoryPassphrase}
-            records={records}
-          />
-        ) : null}
-      </div>
+      <ErrorBoundary>
+        <div id="main-content">
+          {page === 'elders' ? (
+            <ElderManagementPage
+              elders={elders}
+              onAdd={(elder) => setElders((current) => [...current, elder])}
+              onDelete={deleteElder}
+              onSelect={setSelectedElderId}
+              selectedElderId={selectedElderId}
+            />
+          ) : null}
+          {page === 'chat' ? (
+            <ChatPage
+              elder={selectedElder}
+              historyPassphrase={historyPassphrase}
+              onConversationSaved={handleConversationSaved}
+              onHistoryPassphraseChange={setHistoryPassphrase}
+            />
+          ) : null}
+          {page === 'dashboard' ? (
+            <CaregiverDashboardPage
+              historyPassphrase={historyPassphrase}
+              onHistoryLoaded={handleHistoryLoaded}
+              onHistoryPassphraseChange={setHistoryPassphrase}
+              records={records}
+            />
+          ) : null}
+        </div>
+      </ErrorBoundary>
     </div>
   )
 }

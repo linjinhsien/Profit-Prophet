@@ -88,13 +88,18 @@ description: Delivery pipeline overview — always active to provide stage aware
 
 ## Project Context: Profit-Prophet
 
-AI 驅動的照護人員智慧助理系統：
-- **Runtime**: Python 3.11 (AWS Lambda)
-- **Infrastructure**: AWS CDK (TypeScript)
-- **AI Services**: Amazon Bedrock (Claude 3 Sonnet), Comprehend, Transcribe, Polly
-- **Data**: DynamoDB, OpenSearch Serverless (向量搜尋)
-- **API**: API Gateway (REST + WebSocket)
-- **Monitoring**: CloudWatch, SNS
+> **架構版本**：v2（24h MVP，無後端運算層）— 以 `docs/architecture.md` 為準
+
+AI 驅動的照護人員語音助理系統（前端直呼 AWS 服務，無 Lambda 中介層）：
+- **Frontend**: React + Vite + TypeScript, AWS SDK for JavaScript v3
+- **Auth**: Amazon Cognito Identity Pool（最小權限 IAM）
+- **AI Services**: Amazon Bedrock Knowledge Bases (Claude Haiku 4.5), Transcribe Streaming (zh-TW), Polly (Zhiyu Neural)
+- **Data**: DynamoDB (對話紀錄), S3 + S3 Vectors (知識庫向量索引)
+- **Hosting**: AWS Amplify Hosting（或本機 `vite dev`）
+- **服務總數**: 6（Cognito, Bedrock, Transcribe, Polly, S3, DynamoDB）
+- **無**: API Gateway, Lambda, OpenSearch Serverless, Comprehend, CDK
+
+⚠️ 此架構無後端層，無法做 rate limiting 或伺服器端驗證。適用於 PoC/Demo，上生產需補回後端。
 
 ## Handoff Protocol
 

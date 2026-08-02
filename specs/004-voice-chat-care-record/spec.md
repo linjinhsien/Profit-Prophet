@@ -94,6 +94,7 @@
 - **FR-010**: 系統 MUST 在載入時透過 Cognito Identity Pool 取得 AWS 臨時憑證
 - **FR-011**: 系統 MUST 在語音轉錄時顯示即時轉錄狀態指示
 - **FR-012**: AI 回覆 MUST 包含免責聲明標記，提醒內容為 AI 產生建議
+- **FR-013**: 系統 MUST 提供單筆刪除與「刪除我的全部紀錄」功能，IAM DeleteItem 權限由 CloudOps 於實作前手動加入
 
 ### Key Entities
 
@@ -123,3 +124,15 @@
 - 初版不含多人協作功能，為單一使用者操作介面
 - Care Event 類別由 Bedrock Claude 的 structured output 自動產生，無需另外訓練模型
 - 前端直接呼叫 AWS 服務（v2 架構），無 API Gateway 或 Lambda 中介層
+- LiveCaption/backend 為孤立程式碼，不屬 v2 功能範圍；相關 audit 發現以排除說明處理
+- .kiro/steering/PIPELINE.md 的 Project Context 將於派工 Wave 0 前更新為 v2 描述
+- CI 覆蓋率報告僅產出數字不設門檻，待測試補齊後逐步收緊（記入 risk-register）
+
+## Clarifications
+
+### Session 2026-08-01
+
+- Q: 是否立即更新 PIPELINE.md Project Context 為 v2？ → A: Wave 0 前由 Architect 直接改完 commit，不另建 TASK
+- Q: CI workflow 中覆蓋率的處理方式？ → A: 產出覆蓋率報告但不設門檻，逐步調高（記入 risk-register）
+- Q: TASK-009 T3 資料刪除的 IAM 權限如何解決？ → A: TASK-009 開始前先由 CloudOps 手動加好 DeleteItem 權限
+- Q: LiveCaption/backend 的處置方式？ → A: 暫不處理，僅在 audit 加註範圍排除說明

@@ -10,13 +10,13 @@ describe('App', () => {
 
   it('renders the brand name', () => {
     render(<App />)
-    expect(screen.getByText('Profit-Prophet')).toBeInTheDocument()
+    expect(screen.getByText('PROFIT-PROPHET')).toBeInTheDocument()
   })
 
-  it('renders the status message', () => {
+  it('renders the AI disclaimer', () => {
     render(<App />)
     expect(
-      screen.getByText(/前端基礎架構已就緒/)
+      screen.getByText(/AI 回覆僅供資訊整理與輔助判讀/)
     ).toBeInTheDocument()
   })
 

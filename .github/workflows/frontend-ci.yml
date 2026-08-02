@@ -1,0 +1,37 @@
+name: Frontend CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Type check
+        working-directory: frontend
+        run: npx tsc -b --noEmit
+
+      - name: Test with coverage
+        working-directory: frontend
+        run: npm run test:coverage
+
+      - name: Security audit
+        working-directory: frontend
+        run: npm audit --audit-level=high

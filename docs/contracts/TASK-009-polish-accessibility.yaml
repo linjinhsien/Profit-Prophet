@@ -1,7 +1,7 @@
 task:
   id: "TASK-009"
-  title: "收尾：錯誤邊界、載入骨架、無障礙稽核、資料刪除能力"
-  issue: null                      # 建立 Issue 後填入實際編號
+  title: "?�尾：錯誤�??�、�??�骨?�、無?��?稽核?��??�刪?�能??
+  issue: 15                      # 建�? Issue 後填?�實?�編??
   worktree: "feature-polish-accessibility"
   assigned_to: null
 
@@ -10,17 +10,17 @@ task:
     spec_tasks: ["T025", "T026", "T027", "T028", "T029"]
     quickstart: "specs/004-voice-chat-care-record/quickstart.md"
     audit: "docs/compliance/audit-report-2026-08-01.md"
-    findings: ["B-8"]              # 無資料刪除路徑
+    findings: ["B-8"]              # ?��??�刪?�路�?
     depends_on: ["TASK-005", "TASK-006", "TASK-007", "TASK-008"]
 
   output:
     code:
-      - "frontend/src/components/ErrorBoundary.tsx"   # 新建
-      - "frontend/src/components/Skeleton.tsx"        # 新建
-      - "frontend/src/api/conversations.ts"           # 加刪除路徑
-      - "frontend/src/App.tsx"                        # 掛上 ErrorBoundary
+      - "frontend/src/components/ErrorBoundary.tsx"   # ?�建
+      - "frontend/src/components/Skeleton.tsx"        # ?�建
+      - "frontend/src/api/conversations.ts"           # ?�刪?�路�?
+      - "frontend/src/App.tsx"                        # ?��? ErrorBoundary
     tests:
-      - "frontend/src/api/conversations.test.ts"      # 刪除路徑測試
+      - "frontend/src/api/conversations.test.ts"      # ?�除路�?測試
     config: []
 
   subtasks:
@@ -28,76 +28,76 @@ task:
       spec_task: "T025"
       title: "ErrorBoundary"
       detail: >
-        包在 App 的 main-content 外層。錯誤畫面不得顯示原始 stack trace
-        或錯誤物件內容 —— 對話紀錄是照護資料，堆疊裡可能夾帶明文。
+        ?�在 App ??main-content 外層?�錯誤畫?��?得顯示�?�?stack trace
+        ?�錯誤物件內�??��?對話紀?�是?�護資�?，�??�裡?�能夾帶?��???
       blocks: []
     - id: "T2"
       spec_task: "T026"
       title: "載入骨架"
-      detail: "ChatHistory 與 RecordCard 列表的 loading skeleton。"
+      detail: "ChatHistory ??RecordCard ?�表??loading skeleton??
       blocks: []
     - id: "T3"
-      spec_task: null              # 非 spec 項，來自 audit B-8
-      title: "資料刪除能力"
+      spec_task: null              # ??spec ?��?來自 audit B-8
+      title: "資�??�除?��?"
       detail: >
-        SECURITY-RULES 8 要求刪除請求須於 30 天內完成，但
-        conversations.ts 目前只有寫入與讀取。需加單筆刪除與
-        「刪除我的全部紀錄」兩種路徑，並在紀錄頁提供入口。
-        刪除必須為使用者自己的 identity 分區內操作，符合 IAM LeadingKeys。
-        注意：IAM policy 目前只授予 PutItem 與 Query，
-        需要 CloudOps 補 DeleteItem 權限才會生效。
+        SECURITY-RULES 8 要�??�除請�??�於 30 天內完�?，�?
+        conversations.ts ?��??��?寫入?��??�。�??�單筆刪?��?
+        ?�刪?��??�全?��??�」兩種路徑�?並在紀?��??��??�口??
+        ?�除必�??�使?�者自己�? identity ?��??��?作�?符�? IAM LeadingKeys??
+        注�?：IAM policy ?��??��?�?PutItem ??Query�?
+        ?��?CloudOps �?DeleteItem 權�??��??��???
       blocks: []
     - id: "T4"
       spec_task: "T027"
-      title: "無障礙稽核"
+      title: "?��?礙稽??
       detail: >
-        逐一檢查新元件的 aria 屬性、鍵盤操作、焦點管理。
-        重點在 ChatPage 與紀錄頁的動態內容通報。
+        ?��?檢查?��?件�? aria 屬性、鍵?��?作、焦點管?��?
+        ?��???ChatPage ?��??��??��??�內容通報??
       blocks: []
     - id: "T5"
       spec_task: "T028 + T029"
-      title: "型別 lint 全清並驗證 quickstart"
-      detail: "跑 tsc 與 lint 收乾淨，並照 quickstart.md 從零跑一次確認文件正確。"
+      title: "?�別 lint ?��?並�?�?quickstart"
+      detail: "�?tsc ??lint ?�乾淨�?並照 quickstart.md 從零跑�?次確認�?件正確�?
       blocks: []
 
   acceptance_criteria:
-    - "npx tsc -b --noEmit 零錯誤"
-    - "npm run lint 零錯誤"
-    - "npm run test 通過"
-    - "元件拋錯時顯示可復原的錯誤畫面，不顯示 stack trace 或錯誤物件內容"
-    - "載入中顯示骨架而非空白或版面跳動"
-    - "可刪除單筆紀錄，刪除後重新載入不再出現"
-    - "可刪除自己的全部紀錄，且不影響其他 identity 的分區"
-    - "刪除路徑有單元測試"
-    - "所有互動元素可用鍵盤到達與操作，焦點順序合理"
-    - "動態內容變更透過 aria-live 通報"
-    - "依 quickstart.md 從零設定可成功啟動並完成一次問答"
+    - "npx tsc -b --noEmit ?�錯�?
+    - "npm run lint ?�錯�?
+    - "npm run test ?��?"
+    - "?�件?�錯?�顯示可復�??�錯誤畫?��?不顯�?stack trace ?�錯誤物件內�?
+    - "載入中顯示骨?�而�?空白?��??�跳??
+    - "?�刪?�單筆�??��??�除後�??��??��??�出??
+    - "?�刪?�自己�??�部紀?��?且�?影響?��? identity ?��??�"
+    - "?�除路�??�單?�測�?
+    - "?�?��??��?素可?�鍵?�到?��??��?，焦點�?序�???
+    - "?��??�容變更?��? aria-live ?�報"
+    - "�?quickstart.md 從零設�??��??��??�並完�?一次�?�?
 
   out_of_scope:
-    - "IAM policy 增加 dynamodb:DeleteItem（需 CloudOps 在 Stage 4 處理）"
-    - "資料保留策略自動化（audit B-7，需後端或排程）"
-    - "稽核日誌（audit B-6，無後端層無法在前端實作）"
-    - "覆蓋率提升至 80%（另立任務）"
+    - "IAM policy 增�? dynamodb:DeleteItem（�? CloudOps ??Stage 4 ?��?�?
+    - "資�?保�?策略?��??��?audit B-7，�?後端?��?程�?"
+    - "稽核?��?（audit B-6，無後端層無法在?�端實�?�?
+    - "覆�??��??�至 80%（另立任?��?"
 
   review_gate: "full_review"
-  # 理由：刪除能力屬合規要求且不可逆，需同時檢視安全（分區隔離）、
-  # 架構（IAM 權限缺口）與合規（30 天期限）三個面向
+  # ?�由：刪?�能?�屬?��?要�?且�??�逆�??�?��?檢�?安全（�??�?�離）�?
+  # ?��?（IAM 權�?缺口）�??��?�?0 天�??��?三個面??
 
   blocking_decisions:
-    - question: "刪除採硬刪除還是軟刪除（標記 deleted）"
-      impacts: "T3 的實作方式與 IAM 權限需求"
+    - question: "?�除?�硬?�除?�是軟刪?��?標�? deleted�?
+      impacts: "T3 ?�實作方式�? IAM 權�??��?
       why_blocking: >
-        軟刪除只需既有 PutItem 權限，但資料仍在表中，
-        不符 SECURITY-RULES 8「刪除請求須完成」的字面要求。
-        硬刪除需 CloudOps 補 DeleteItem 權限才能運作。
+        軟刪?�只?�?��? PutItem 權�?，�?資�?仍在表中�?
+        不符 SECURITY-RULES 8?�刪?��?求�?完�??��?字面要�???
+        硬刪?��? CloudOps �?DeleteItem 權�??�能?��???
       recommendation: >
-        照護資料建議硬刪除，並請 CloudOps 同步補權限。
-        若 Stage 4 來不及，可先實作為硬刪除但標註功能待權限開通，
-        不要為了繞權限而改成軟刪除 —— 那會留下合規假象。
+        ?�護資�?建議硬刪?��?並�? CloudOps ?�步補�??��?
+        ??Stage 4 來�??��??��?實�??�硬?�除但�?註�??��?權�??�通�?
+        不�??��?繞�??�而改?��??�除 ?��?????��??��??�象??
 
   notes: >
-    T1 至 T5 之間無相互依賴，可分給多人並行。
-    T3 是唯一有外部依賴的子任務（需 CloudOps 補 IAM 權限），
-    建議最先開工以留出協調時間。
+    T1 ??T5 之�??�相互�?賴�??��?給�?人並行�?
+    T3 ?�唯一?��??��?賴�?子任?��??� CloudOps �?IAM 權�?）�?
+    建議?�?��?工以?�出?�調?��???
 
   status: "pending"

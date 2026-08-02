@@ -1,80 +1,80 @@
 task:
   id: "TASK-008"
-  title: "US4 紀錄篩選與搜尋：抽取 RecordFilters 並補關鍵字搜尋"
-  issue: null                      # 建立 Issue 後填入實際編號
+  title: "US4 紀?�篩?��??��?：抽??RecordFilters 並�??�鍵字�?�?
+  issue: 14                      # 建�? Issue 後填?�實?�編??
   worktree: "feature-us4-filter-search"
   assigned_to: null
 
   input:
     spec: "specs/004-voice-chat-care-record/tasks.md"
     spec_tasks: ["T021", "T022", "T023", "T024"]
-    depends_on: ["TASK-006"]       # 需要 RecordCard 與 useCareRecords
+    depends_on: ["TASK-006"]       # ?��?RecordCard ??useCareRecords
 
   output:
     code:
-      - "frontend/src/components/RecordFilters.tsx"        # 新建
-      - "frontend/src/pages/CaregiverDashboardPage.tsx"    # 整合
-      - "frontend/src/lib/useCareRecords.ts"               # 加篩選邏輯
+      - "frontend/src/components/RecordFilters.tsx"        # ?�建
+      - "frontend/src/pages/CaregiverDashboardPage.tsx"    # ?��?
+      - "frontend/src/lib/useCareRecords.ts"               # ?�篩?��?�?
     tests:
-      - "frontend/src/lib/useCareRecords.test.ts"          # 擴充既有測試
+      - "frontend/src/lib/useCareRecords.test.ts"          # ?��??��?測試
     config: []
 
   scope_note: >
-    範圍比 spec 描述的小。查證 CaregiverDashboardPage 現況後確認：
-    分類篩選已經實作完成（filter 狀態、CARE_EVENTS 按鈕群、filteredRecords
-    useMemo 都在）。本任務實際要做的是把它抽成元件，並補上目前缺的
-    關鍵字搜尋、debounce、結果筆數通報。
+    範�?�?spec ?�述?��??�查�?CaregiverDashboardPage ?��?後確認�?
+    ?��?篩選已�?實�?完�?（filter ?�?�、CARE_EVENTS ?��?群、filteredRecords
+    useMemo ?�在）。本任�?實�?要�??�是?��??��??�件，並補�??��?缺�?
+    ?�鍵字�?尋、debounce?��??��??�通報??
 
   subtasks:
     - id: "T1"
       spec_task: "T021"
-      title: "抽取 RecordFilters 元件"
+      title: "?��? RecordFilters ?�件"
       detail: >
-        把現有的 9 顆分類按鈕搬進元件，行為不變（含 aria-pressed）。
-        spec 寫 dropdown，但現況是按鈕群且已具無障礙屬性；
-        建議維持按鈕群，改成 dropdown 是無收益的重工。
-        新增 debounced 關鍵字輸入框。
+        ?�現?��? 9 顆�?類�??�搬?��?件�?行為不�?（含 aria-pressed）�?
+        spec �?dropdown，�??��??��??�群且已?�無?��?屬性�?
+        建議維�??��?群�??��? dropdown ?�無?��??��?工�?
+        ?��? debounced ?�鍵字輸?��???
       blocks: ["T2", "T3"]
     - id: "T2"
       spec_task: "T023"
-      title: "useCareRecords 加篩選邏輯"
+      title: "useCareRecords ?�篩?��?�?
       detail: >
-        依 category 與關鍵字過濾，關鍵字比對 summary 與 queryText 欄位。
-        注意紀錄內容是解密後才存在記憶體，篩選必須在 client 端做，
-        不可為了搜尋而把明文送去任何遠端服務。
+        �?category ?��??��??�濾，�??��?比�? summary ??queryText 欄�???
+        注�?紀?�內容是�??後�?存在記憶體�?篩選必�???client 端�?�?
+        不可?��??��??��??��??�去任�??�端?��???
       blocks: ["T3"]
     - id: "T3"
       spec_task: "T022 + T024"
-      title: "整合進 Dashboard 並顯示結果筆數"
+      title: "?��???Dashboard 並顯示�??��???
       detail: >
-        selectedCategory 與 searchQuery 的狀態管理，
-        以及「顯示 N 筆紀錄」搭配 aria-live="polite"。
+        selectedCategory ??searchQuery ?��??�管?��?
+        以�??�顯�?N 筆�??�」搭??aria-live="polite"??
 
   acceptance_criteria:
-    - "npx tsc -b --noEmit 零錯誤"
-    - "npm run lint 零錯誤"
-    - "npm run test 通過"
-    - "選擇分類後只顯示該分類紀錄，行為與重構前一致"
-    - "關鍵字與分類可同時生效，兩者為交集而非聯集"
-    - "關鍵字輸入有 debounce，連續打字不會每個字元都觸發重算"
-    - "結果筆數以 aria-live=\"polite\" 通報，篩選後螢幕閱讀器可得知變化"
-    - "篩選為純 client 端運算，無任何新增的網路請求"
-    - "無符合結果時顯示空狀態訊息而非空白畫面"
-    - "既有 aria-pressed 等無障礙屬性在抽取後未遺失"
+    - "npx tsc -b --noEmit ?�錯�?
+    - "npm run lint ?�錯�?
+    - "npm run test ?��?"
+    - "?��??��?後只顯示該�?類�??��?行為?��?構�?一??
+    - "?�鍵字�??��??��??��??��??�者為交�??��??��?"
+    - "?�鍵字輸?��? debounce，�???��?不�?每個�??�都觸發?��?"
+    - "結�?筆數�?aria-live=\"polite\" ?�報，篩?��??��??��??�可得知變�?"
+    - "篩選?��? client 端�?算�??�任何新增�?網路請�?"
+    - "?�符?��??��?顯示空�??��??�而�?空白?�面"
+    - "?��? aria-pressed 等無?��?屬性在?��?後未?�失"
 
   out_of_scope:
-    - "伺服器端搜尋或 DynamoDB 查詢條件變更"
-    - "全文檢索索引"
-    - "RecordCard 的實作（TASK-006）"
+    - "伺�??�端?��???DynamoDB ?�詢條件變更"
+    - "?��?檢索索�?"
+    - "RecordCard ?�實作�?TASK-006�?
 
   review_gate: "security_review"
-  # 理由：搜尋處理的是解密後的照護內容明文，需確認篩選過程
-  # 不將明文寫入 URL、localStorage 或任何遠端請求
+  # ?�由：�?尋�??��??�解密�??�照護內容�??��??�確�?篩選?��?
+  # 不�??��?寫入 URL?�localStorage ?�任何�?端�?�?
 
   blocking_decisions: []
 
   notes: >
-    因分類篩選已存在，工量從 spec 估的 1.5 小時下修為約 1 小時。
-    主要風險是抽取元件時弄丟現有的無障礙屬性，驗收條件已針對此設檢查點。
+    ?��?類篩?�已存在，工?��? spec 估�? 1.5 小�?下修?��? 1 小�???
+    主�?風險?�抽?��?件�?弄�??��??�無?��?屬性�?驗收條件已�?對此設檢?��???
 
   status: "pending"
