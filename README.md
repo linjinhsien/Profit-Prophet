@@ -4,7 +4,7 @@ AI 驅動的照護人員語音助理。照護人員用中文語音或文字提�
 
 > **目前版本**：v2 — 24 小時 MVP，無後端運算層（前端直呼 AWS 服務）
 
-**Branch**: `master` | **Started**: 2026-08-01 | **Last updated**: 2026-08-02  
+**Branch**: `master` | **Started**: 2026-08-01 | **Last updated**: 2026-08-02 20:35 UTC+8  
 **Architecture Verification**: ✅ 95% Complete | [📊 View Report](docs/architecture-verification/) | [📽️ PowerPoint](docs/architecture-verification/Profit-Prophet-完整驗證.pptx)  
 **Live Demo**: 🌐 https://d1qintm5rk17ye.cloudfront.net
 
@@ -110,6 +110,7 @@ graph LR
 | 08-02 | kiro | `speckit.daily-report` | 生成每日報告 |
 | 08-02 | claude-code | Architecture Verification | 驗證 10+ AWS 服務 |
 | 08-02 | claude-code | Documentation | 生成 5 份文件 + PPT |
+| 08-02 | claude-code | CloudTrail Audit | 抓取 760 個事件，完整記錄 08/01–08/02 活動 |
 
 ### 🔗 相關資源
 
@@ -576,6 +577,85 @@ gitGraph
 | CI/CD | ✅ GitHub Actions |
 
 **Last Verified**: 2026-08-02
+
+---
+
+## 📡 CloudTrail 活動記錄 (2026-08-01 08:00 ~ 08-02 20:35 UTC+8)
+
+> 由 Claude Code 透過 `aws cloudtrail lookup-events` 自動抓取並整理，共 760 個不重複事件。
+
+### 08/01 下午–晚上
+
+| 時間 (UTC+8) | 事件 | 服務 | 說明 |
+|-------------|------|------|------|
+| 20:08 | DescribeStacks, DescribeStackEvents | cloudformation | CDK 部署查詢 |
+| 20:08 | CreateLogStream | logs | CloudWatch 建立 Log |
+| 20:12 | Start/EndStreamTranscription | transcribestreaming | 語音辨識測試 |
+| 20:13–20:40 | **TerminateInstances → RunInstances ×5** | ec2 | EC2 反覆重建 (UserData 腳本調試) |
+| 20:13 | AuthorizeSecurityGroupIngress | ec2 | Security Group 修改 |
+| 20:13 | RegisterManagedInstance | ssm | SSM 管理登錄 |
+| 20:53 | DescribeIdentityPool, GetIdentityPoolRoles | cognito-identity | Cognito 驗證 |
+| 20:56 | DescribeTable | dynamodb | DynamoDB 查表 |
+| 20:57 | ListFoundationModels, ListInferenceProfiles | bedrock | 查詢可用模型 |
+| 21:06 | **PutSecretValue** | secretsmanager | 寫入新 Secret |
+| 21:08–21:22 | Start/EndStreamTranscription ×6 | transcribestreaming | 密集語音測試 |
+| 21:41 | GetDatabases | glue | Glue 資料庫查詢 |
+| 23:20 | Start/EndStreamTranscription | transcribestreaming | 深夜語音測試 |
+
+### 08/02 凌晨–早上
+
+| 時間 (UTC+8) | 事件 | 服務 | 說明 |
+|-------------|------|------|------|
+| 01:55 | DescribeConfigRules, ListResources | config | AWS Config 掃描 |
+| 03:24 | PolicyExecutionEvent ×3 | ecr | 容器映像拉取 |
+| 05:39 | DescribeAutoScalingGroups | autoscaling | Auto Scaling 檢查 |
+| 06:05 | **ListIndices** | kendra | Kendra 索引查詢 |
+
+### 08/02 上午 — 基礎設施重建 🏗️
+
+| 時間 (UTC+8) | 事件 | 服務 | 說明 |
+|-------------|------|------|------|
+| 09:42 | ListIdentityPools, ListTables, ListBuckets | 多服務 | 全面資源盤點 |
+| 09:44 | **CreateIdentityPool → DeleteIdentityPool** | cognito-identity | Cognito 重建 |
+| 09:46 | **CreateCollection (AOSS) + CreateKnowledgeBase** | aoss + bedrock | OpenSearch Serverless + KB 建立 |
+| 09:52 | **CreateDataSource + StartIngestionJob** | bedrock | 知識庫資料匯入 |
+| 09:52 | **CreateTable** | dynamodb | 建立新 DynamoDB 表 |
+| 09:53–10:21 | Converse ×多次 | bedrock | AI 問答測試 |
+| 10:46 | **CreateInvalidation** | cloudfront | 前端快取清除 |
+| 10:52 | **CreateBucket + PutBucketPolicy** | s3 | 建立新 S3 Bucket |
+| 10:59 | **PutRolePolicy** | iam | 修改 IAM 角色權限 |
+| 11:02 | GetRole, GetRolePolicy, ListRolePolicies | iam | IAM 稽核 |
+| 11:04–11:05 | GetConversation ×2 | q | Amazon Q 對話記錄查詢 |
+| 11:09–11:22 | Start/EndStreamTranscription ×8 | transcribestreaming | 密集語音辨識測試 |
+| 11:22–11:23 | Converse + SynthesizeSpeech ×多次 | bedrock + polly | 完整語音對話流程 |
+| 11:28 | **ListEndpoints** | sagemaker | SageMaker 端點查詢 |
+| 11:29–11:44 | CreateInvalidation ×6 | cloudfront | 前端多次部署更新 |
+
+### 08/02 下午–晚上
+
+| 時間 (UTC+8) | 事件 | 服務 | 說明 |
+|-------------|------|------|------|
+| 12:04 | ListServices (AppRunner), ListClusters (ECS) | 多服務 | 全面資源掃描 |
+| 12:11 | **ListFunctions, GetRestApis** | lambda + apigateway | Lambda + API Gateway 查詢 |
+| 12:11 | **GetInstances** | lightsail | Lightsail 查詢 |
+| 12:52–13:10 | Transcribe + Converse + SynthesizeSpeech ×多輪 | 多服務 | 完整測試循環 |
+| 13:00 | **ListEksAnywhereSubscriptions** | eks | EKS 查詢 |
+| 14:37–14:38 | Transcribe + Converse + SynthesizeSpeech | 多服務 | 下午語音對話測試 |
+| 17:22 | PolicyExecutionEvent ×3, EndStreamTranscription | ecr + transcribe | 容器更新 + 語音結束 |
+| 20:20 | **ConsoleLogin + GetCostAndUsage ×5 + GetCostForecast** | signin + ce | 登入 + 費用查詢 |
+| 20:20–20:22 | **SendMessage ×3, StartConversation** | q | Amazon Q 使用 |
+| 20:23 | ConsoleLogin → CloudShell → InvokeModel | signin + cloudshell + bedrock | 開啟本次 Claude Code |
+| 20:31 | ListKnowledgeBases, GetKnowledgeBase, ListCollections | bedrock + aoss | CloudTrail 調查查詢 |
+
+### 🔍 關鍵發現
+
+| 發現 | 說明 |
+|------|------|
+| **EC2 反覆重建 (×5)** | 08/01 20:13–20:40，調試 EC2 UserData 啟動腳本 |
+| **Knowledge Base 從零建立** | 08/02 09:46，完整重建 OpenSearch + Bedrock KB + DynamoDB + Cognito |
+| **CloudFront 快取清除 ×8** | 08/02 10:46–11:44，前端持續更新部署 |
+| **Amazon Q 使用** | 08/02 11:04–11:05, 20:20–20:22，在 Claude Code 前使用了 Amazon Q |
+| **Kendra 存在** | 08/02 06:05 有 ListIndices，架構中存在 Kendra 索引服務 |
 
 ---
 
