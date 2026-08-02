@@ -1,0 +1,486 @@
+# =============================================================================
+# Profit-Prophet — Complete Architecture Definition
+# =============================================================================
+# Generated   : 2026-08-02 20:35 UTC+8
+# Verified by : AWS CloudTrail audit (760 events, us-west-2 + us-east-1)
+# Account ID  : 056724761684
+# Region      : us-west-2 (primary)
+# Version     : v2 — 24h MVP
+# =============================================================================
+
+project:
+  name: Profit-Prophet
+  description: >
+    AI-driven voice assistant for caregivers. Caregivers ask questions in
+    Mandarin (voice or text); the system retrieves answers from the care
+    knowledge base (RAG), automatically classifies Care Events, and responds
+    with synthesized speech.
+  version: v2
+  started: "2026-08-01"
+  last_verified: "2026-08-02T20:35:00+08:00"
+  live_demo: https://d1qintm5rk17ye.cloudfront.net
+  repository: https://github.com/linjinhsien/Profit-Prophet
+
+# =============================================================================
+# NETWORK / CDN LAYER
+# =============================================================================
+cloudfront:
+  distribution_id: E1NHT4ZC7ZFGUP
+  domain: d1qintm5rk17ye.cloudfront.net
+  region: us-east-1  # CloudFront is global, home region us-east-1
+  status: Deployed
+  http2: true
+  origins:
+    - id: S3-Website
+      type: S3StaticWebsite
+      domain: profit-prophet-frontend-site.s3-website-us-west-2.amazonaws.com
+      path_pattern: "/*"
+      description: React SPA (index.html, assets/, pcm-worklet.js)
+    - id: Backend-EC2
+      type: CustomOrigin
+      domain: ec2-35-91-137-3.us-west-2.compute.amazonaws.com
+      port: 8080
+      path_patterns:
+        - "/api/*"
+        - "/ws/*"
+      description: Node.js backend — REST API + LiveCaption WebSocket
+  cache_behaviors:
+    - path: "/api/*"
+      origin: Backend-EC2
+      cache: disabled
+    - path: "/ws/*"
+      origin: Backend-EC2
+      cache: disabled
+    - path: "/*"
+      origin: S3-Website
+      cache: enabled
+
+# =============================================================================
+# COMPUTE LAYER
+# =============================================================================
+ec2:
+  instance_id: i-099c8061008241015
+  instance_type: t3.micro
+  state: running
+  region: us-west-2
+  availability_zone: us-west-2a
+  public_ip: 35.91.137.3
+  public_dns: ec2-35-91-137-3.us-west-2.compute.amazonaws.com
+  ami: ami-08ffbbe07d3a1a715
+  port: 8080
+  security_group: sg-0cfc53dd6f829c67b
+  container_source: ECR  # pulls Docker image from ECR
+  runtime: Node.js
+  services:
+    - name: LiveCaption
+      description: >
+        WebSocket proxy for Amazon Transcribe Streaming.
+        Encapsulates Transcribe Streaming (zh-TW), speaker detection,
+        multilingual auto-detect (zh-TW / id-ID / vi-VN / en / ja / th),
+        partial-result stabilization, and 3-second silence keepalive.
+      endpoints:
+        - path: /ws/transcribe
+          protocol: WebSocket
+        - path: /api/*
+          protocol: HTTP
+  deployment_history:
+    - event: initial_deploy
+      timestamp: "2026-08-01T21:15:00+08:00"
+      commit: ef0019c
+      note: EC2 rebuilt 5 times (20:13–20:40 UTC+8) to debug UserData startup script
+    - event: caremate_integration
+      timestamp: "2026-08-02T11:50:00+08:00"
+      commit: 2c40406
+
+lambda:
+  region: us-west-2
+  runtime: python3.12
+  handler: handler.handler
+  functions:
+    - name: caremate-ai-speech-dev
+      description: Voice/speech processing — Polly TTS synthesis dispatch
+      memory_mb: 1024
+      timeout_sec: 180
+    - name: caremate-ai-chat-dev
+      description: Conversation management — Bedrock Converse API orchestration
+      memory_mb: 512
+      timeout_sec: 120
+    - name: caremate-ai-summary-dev
+      description: Conversation summarization — generates daily care summaries
+      memory_mb: 512
+      timeout_sec: 120
+    - name: caremate-ai-memory-dev
+      description: Long-term memory — read/write elder memory to DynamoDB
+      memory_mb: 256
+      timeout_sec: 30
+    - name: caremate-ai-profile-dev
+      description: Elder profile CRUD — manage caremate-ai_elder_profile table
+      memory_mb: 256
+      timeout_sec: 30
+
+# =============================================================================
+# AUTHENTICATION LAYER
+# =============================================================================
+cognito:
+  identity_pool_id: us-west-2:5cc123d7-c990-41a7-b887-62c67264ea71
+  identity_pool_name: profit-prophet-frontend
+  region: us-west-2
+  status: Active
+  roles:
+    unauthenticated: arn:aws:iam::056724761684:role/profit-prophet-cognito-unauth
+  description: >
+    Provides temporary AWS credentials for the browser frontend.
+    Guest (unauthenticated) identity flow — no login required for PoC.
+    IAM role grants minimum permissions to call Transcribe, Bedrock, Polly, DynamoDB.
+
+iam:
+  roles:
+    - name: profit-prophet-cognito-unauth
+      type: unauthenticated_cognito
+      permissions:
+        - service: transcribe
+          actions: [TranscribeStreaming:StartStreamTranscription]
+          resources: ["*"]
+        - service: bedrock
+          actions:
+            - bedrock:RetrieveAndGenerate
+            - bedrock:Retrieve
+            - bedrock:InvokeModel
+          resources:
+            - arn:aws:bedrock:us-west-2:056724761684:knowledge-base/H4NWXXP6DZ
+            - arn:aws:bedrock:us-west-2::foundation-model/*
+        - service: polly
+          actions: [polly:SynthesizeSpeech]
+          resources: ["*"]
+        - service: dynamodb
+          actions:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Query
+          resources:
+            - arn:aws:dynamodb:us-west-2:056724761684:table/profit-prophet-conversations
+    - name: profit-prophet-bedrock-kb
+      type: service_role
+      description: Allows Bedrock to read S3 and write to AOSS for Knowledge Base
+      permissions:
+        - service: s3
+          actions: [s3:GetObject, s3:ListBucket]
+        - service: aoss
+          actions: [aoss:APIAccessAll]
+
+# =============================================================================
+# AI / ML LAYER
+# =============================================================================
+bedrock:
+  region: us-west-2
+  llm:
+    model_id: us.anthropic.claude-sonnet-4-20250514-v1:0
+    model_name: Claude Sonnet 4
+    confirmed_by: Lambda env var BEDROCK_MODEL_ID
+    use_cases:
+      - RAG question answering (RetrieveAndGenerate)
+      - Care Event classification (structured output)
+      - Conversation summarization
+  knowledge_base:
+    id: H4NWXXP6DZ
+    name: profit-prophet-care-kb
+    status: ACTIVE
+    description: >
+      照護知識庫 — 長者健康照護、失智症、用藥管理、營養睡眠、緊急處理
+    embedding_model: amazon.titan-embed-text-v2:0
+    embedding_dimensions: 1024
+    vector_store: opensearch_serverless
+    rag_api: RetrieveAndGenerate
+
+opensearch_serverless:
+  collection_name: caremate-ai-kb
+  collection_id: 5jbmcmvs9c1fwxf0mxxe
+  type: VECTORSEARCH
+  region: us-west-2
+  status: ACTIVE
+  standby_replicas: ENABLED
+  deletion_protection: DISABLED
+  created: "2026-08-02T09:46:00+08:00"  # CloudTrail confirmed CreateCollection
+  confirmed_by: CloudTrail CreateCollection event 2026-08-02 09:46 UTC+8
+  endpoints:
+    collection: https://5jbmcmvs9c1fwxf0mxxe.us-west-2.aoss.amazonaws.com
+    dashboard: https://5jbmcmvs9c1fwxf0mxxe.us-west-2.aoss.amazonaws.com/_dashboards
+  index:
+    name: bedrock-knowledge-base-default-index
+    vector_field: bedrock-knowledge-base-default-vector
+    text_field: AMAZON_BEDROCK_TEXT_CHUNK
+    metadata_field: AMAZON_BEDROCK_METADATA
+
+transcribe:
+  service: Amazon Transcribe Streaming
+  region: us-west-2
+  language: zh-TW
+  features:
+    - streaming_transcription
+    - speaker_identification
+    - multilingual_auto_detect:
+        languages: [zh-TW, id-ID, vi-VN, en-US, ja-JP, th-TH]
+    - partial_results_stability: high
+    - silence_keepalive_sec: 3
+  access: via_ec2_websocket_proxy
+  confirmed_by: CloudTrail StartStreamTranscription events
+
+polly:
+  service: Amazon Polly
+  region: us-west-2
+  voice: Zhiyu
+  engine: neural
+  output_format: mp3
+  language: cmn-CN  # Mandarin Chinese
+  confirmed_by: CloudTrail SynthesizeSpeech events (08/01 23:20, 08/02 11:22, 14:38)
+
+# =============================================================================
+# DATA LAYER
+# =============================================================================
+dynamodb:
+  region: us-west-2
+  billing_mode: PAY_PER_REQUEST
+  tables:
+    - name: profit-prophet-conversations
+      status: ACTIVE
+      description: User conversation history (Profit-Prophet chatbot)
+      keys:
+        - attribute: identityId
+          type: HASH
+        - attribute: id
+          type: RANGE
+      item_count: 0
+      created: "2026-08-02"
+
+    - name: caremate-ai_elder_profile
+      status: ACTIVE
+      description: Elder basic profiles (CareMate AI)
+      keys:
+        - attribute: elder_id
+          type: HASH
+      item_count: 11
+      size_bytes: 7578
+      created: "2026-08-02"
+
+    - name: caremate-ai_elder_memory
+      status: ACTIVE
+      description: Elder long-term memory and care events
+      keys:
+        - attribute: elder_id
+          type: HASH
+        - attribute: timestamp
+          type: RANGE
+      item_count: 0
+      created: "2026-08-02"
+
+s3:
+  region: us-west-2
+  buckets:
+    - name: profit-prophet-frontend-site
+      type: static_website
+      description: React SPA — served via CloudFront
+      last_updated: "2026-08-02T04:03:00Z"
+      contents:
+        - index.html
+        - assets/
+        - pcm-worklet.js
+
+    - name: caremate-ai-audio-056724761684-us-west-2
+      type: audio_storage
+      description: Temporary audio file storage for speech processing
+
+    - name: profit-prophet-care-docs  # source for Knowledge Base ingestion
+      type: knowledge_base_source
+      description: Care documentation ingested into Bedrock Knowledge Base
+
+# =============================================================================
+# SECURITY LAYER
+# =============================================================================
+secrets_manager:
+  region: us-west-2
+  secrets:
+    - name: profit-prophet/env
+      arn: arn:aws:secretsmanager:us-west-2:056724761684:secret:profit-prophet/env-VFIUSx
+      description: Backend environment variables (API keys, config)
+
+kms:
+  region: us-west-2
+  key_type: auto_managed
+  used_by:
+    - secrets_manager
+    - opensearch_serverless
+    - s3_encryption
+  confirmed_by: CloudTrail Decrypt events (periodic, every ~30min)
+
+ecr:
+  region: us-west-2
+  description: Docker container image registry for EC2 LiveCaption service
+  confirmed_by: CloudTrail PolicyExecutionEvent (image pulls on restart)
+
+# =============================================================================
+# MONITORING
+# =============================================================================
+monitoring:
+  cloudwatch:
+    enabled: true
+    region: us-west-2
+    log_streams:
+      - name: ec2-backend-logs
+        created: "2026-08-01T20:08:00+08:00"
+  auto_scaling:
+    group_checked: true
+    confirmed_by: CloudTrail DescribeAutoScalingGroups events
+    note: EC2 currently fixed capacity (t3.micro), no active scaling policy
+
+# =============================================================================
+# DATA FLOW
+# =============================================================================
+data_flows:
+  voice_query:
+    description: User speaks → transcribed → answered → spoken back
+    steps:
+      - step: 1
+        actor: Browser
+        action: Capture microphone via Web Audio API
+      - step: 2
+        actor: Browser → EC2 (WebSocket /ws/transcribe)
+        action: Stream PCM audio to LiveCaption WebSocket
+      - step: 3
+        actor: EC2 → Amazon Transcribe Streaming
+        action: Forward audio stream, receive zh-TW transcript
+      - step: 4
+        actor: EC2 → Browser
+        action: Return transcript text (partial + final results)
+      - step: 5
+        actor: Browser → Bedrock RetrieveAndGenerate
+        action: Send transcript as query with KB ID H4NWXXP6DZ
+      - step: 6
+        actor: Bedrock → AOSS (caremate-ai-kb)
+        action: Vector search on embedded query (Titan Embed v2, 1024 dims)
+      - step: 7
+        actor: Bedrock → Claude Sonnet 4
+        action: Generate answer with retrieved context + classify Care Event
+      - step: 8
+        actor: Browser → Lambda (caremate-ai-speech-dev) → Polly
+        action: Synthesize answer text to Zhiyu Neural MP3
+      - step: 9
+        actor: Browser
+        action: Play MP3 audio response
+      - step: 10
+        actor: Browser → DynamoDB (profit-prophet-conversations)
+        action: Persist conversation record (identityId + id keys)
+
+  care_event_classification:
+    description: Single Bedrock call returns answer + structured Care Event
+    model: Claude Sonnet 4 (structured output)
+    output_schema:
+      - answer: string
+      - care_event:
+          type: enum  # [medication, nutrition, mobility, emotion, emergency, other]
+          severity: enum  # [low, medium, high]
+          summary: string
+
+# =============================================================================
+# ARCHITECTURE DECISIONS
+# =============================================================================
+decisions:
+  - decision: No API Gateway / Lambda for main path
+    v1: API Gateway + Lambda
+    v2: Frontend calls AWS directly via Cognito credentials
+    reason: Saves one deployment layer; sufficient for 24h PoC
+
+  - decision: OpenSearch Serverless (AOSS) for vector store
+    v1: OpenSearch Serverless (planned)
+    v2: OpenSearch Serverless AOSS (actual, confirmed by CloudTrail)
+    note: Earlier docs incorrectly stated S3 Vectors — corrected 2026-08-02
+
+  - decision: EC2 instead of App Runner
+    v1_plan: App Runner (serverless containers)
+    v2_actual: EC2 t3.micro
+    reason: LiveCaption requires persistent WebSocket connections; EC2 gives full control
+    deployment_note: Rebuilt 5 times on 2026-08-01 20:13–20:40 UTC+8 to debug UserData
+
+  - decision: Reject Amazon Nova Sonic
+    reason: >
+      Nova Sonic supports Chinese but with strong ABC accent (American-style Mandarin).
+      Taiwan elder care requires natural Taiwan Mandarin (zh-TW) and Taiwanese.
+      Maintained Transcribe Streaming (zh-TW) + Polly Zhiyu Neural instead.
+
+  - decision: Claude Sonnet 4 over Haiku 4.5
+    model: us.anthropic.claude-sonnet-4-20250514-v1:0
+    reason: High-performance reasoning for complex care Q&A and structured classification
+    corrected_from: Earlier docs incorrectly listed Claude Haiku 4.5 — fixed 2026-08-02
+
+# =============================================================================
+# SERVICES EVALUATED BUT NOT USED
+# =============================================================================
+evaluated_not_used:
+  - service: Amazon Kendra
+    event: ListIndices (CloudTrail 2026-08-02 06:05 UTC+8)
+    decision: Not deployed — Bedrock Knowledge Base with AOSS covers RAG needs
+
+  - service: Amazon SageMaker
+    event: ListEndpoints (CloudTrail 2026-08-02 11:28 UTC+8)
+    decision: No active endpoints — using Bedrock managed models instead
+
+  - service: AWS Glue
+    event: GetDatabases (CloudTrail 2026-08-01 21:41, 2026-08-02 08:58 UTC+8)
+    decision: Not integrated — no ETL pipeline needed for current scope
+
+  - service: Amazon App Runner
+    decision: Original plan; replaced by EC2 for WebSocket support
+
+  - service: Amazon Comprehend
+    decision: Intent classification merged into Claude structured output
+
+  - service: Amazon Nova Sonic
+    decision: Rejected — ABC accent unsuitable for Taiwan elder care
+
+  - service: Amazon Q
+    note: Used as development assistant tool (CloudTrail SendMessage 08/02 11:04, 20:20)
+
+# =============================================================================
+# SECURITY LIMITATIONS (PoC)
+# =============================================================================
+security:
+  limitations:
+    - issue: No server-side rate limiting
+      impact: Bedrock cost abuse risk
+      mitigation: IAM resource-level permissions as only guardrail
+    - issue: Unauthenticated Cognito flow
+      impact: Any user can invoke AWS services
+      mitigation: Minimum IAM permissions; resource ARN scoping
+    - issue: EC2 direct exposure
+      impact: t3.micro attack surface on port 8080
+      mitigation: Security group sg-0cfc53dd6f829c67b; CloudFront as proxy
+  recommendation: >
+    Add backend layer (Lambda or Bedrock AgentCore) before production
+    to handle rate limiting, input validation, and audit logging.
+
+# =============================================================================
+# CLOUDTRAIL AUDIT SUMMARY
+# =============================================================================
+cloudtrail_audit:
+  date: "2026-08-02"
+  regions: [us-west-2, us-east-1]
+  total_events: 760
+  key_findings:
+    - finding: EC2 rebuilt 5 times during initial deploy
+      time: "2026-08-01 20:13–20:40 UTC+8"
+      events: [TerminateInstances, RunInstances]
+      commit: ef0019c
+
+    - finding: Full Knowledge Base infrastructure created from scratch
+      time: "2026-08-02 09:46–09:52 UTC+8"
+      events: [CreateCollection, CreateKnowledgeBase, CreateDataSource, StartIngestionJob, CreateTable]
+      commit: 2c40406
+
+    - finding: CloudFront cache invalidated 8 times in 1 hour
+      time: "2026-08-02 10:46–11:44 UTC+8"
+      events: [CreateInvalidation x8]
+      meaning: Rapid frontend iteration / deployment during morning session
+
+    - finding: Full voice pipeline tested end-to-end
+      time: "2026-08-02 11:22 UTC+8"
+      events: [StartStreamTranscription, Converse, SynthesizeSpeech x6]
+      meaning: LiveCaption + Bedrock + Polly confirmed working together
