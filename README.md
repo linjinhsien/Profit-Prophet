@@ -135,17 +135,18 @@ Board 上包含 v1（原設計）與 **v2（現行 24h MVP）** 兩組圖表：
 
 ### 📽️ 架構驗證簡報
 
-**[Profit-Prophet 完整驗證簡報 (PowerPoint, 8頁)](docs/architecture-verification/Profit-Prophet-完整驗證.pptx)** ⭐
+**[Profit-Prophet 完整驗證簡報 (PowerPoint, 9頁)](docs/architecture-verification/Profit-Prophet-完整驗證.pptx)** ⭐
 
 簡報內容：
 1. 專案簡介與驗證概述
-2. 完整驗證結果 (10+ AWS 服務)
-3. 實際架構圖 (已驗證)
-4. LiveCaption 語音辨識層
-5. v1 → v2 架構演進
-6. 為什麼不用 Amazon Nova Sonic?
-7. 技術棧總覽
-8. 結論與建議
+2. **AI 輔助開發工作流程** (Kiro + Speckit + GitHub) 🆕
+3. 完整驗證結果 (10+ AWS 服務)
+4. 實際架構圖 (已驗證)
+5. LiveCaption 語音辨識層
+6. v1 → v2 架構演進
+7. 為什麼不用 Amazon Nova Sonic?
+8. 技術棧總覽
+9. 結論與建議
 
 **驗證日期**: 2026-08-02 | **驗證評分**: 95% ✅
 
