@@ -38,49 +38,48 @@ Board 上包含 v1（原設計）與 **v2（現行 24h MVP）** 兩組圖表：
 
 ```mermaid
 gitGraph
-    commit id: "d6eaf57" msg: "Initial commit"
-    commit id: "63f1d61" msg: "constitution"
-    commit id: "ffcf963" msg: "speckit + kiro config"
-    commit id: "6da12d0" msg: "auto-commit"
-    commit id: "a608921" msg: "Add specification"
-    commit id: "c2436a9" tag: "PR#1" msg: "architecture diagrams"
+    commit id: "d6eaf57 Initial commit"
+    commit id: "63f1d61 constitution"
+    commit id: "ffcf963 speckit+kiro"
+    commit id: "a608921 Add spec"
+    commit id: "c2436a9 arch-diagrams" tag: "PR1"
     branch role-setup
-    commit id: "16cee59" msg: "project role + setup"
+    commit id: "16cee59 role+setup"
     checkout main
-    merge role-setup id: "98d1eb8" tag: "PR#2"
+    merge role-setup id: "98d1eb8" tag: "PR2"
     branch workflow-infra
-    commit id: "2a07d8f" msg: "github-workflow spec"
-    commit id: "028979b" msg: "contracts + task specs"
+    commit id: "2a07d8f workflow-spec"
+    commit id: "x028979b contracts"
     checkout main
     branch multi-role-pipeline
-    commit id: "f2f6b18" msg: "multi-role pipeline"
-    commit id: "fc899cc" msg: "integrate git workflow"
+    commit id: "f2f6b18 pipeline"
+    commit id: "fc899cc git-workflow"
     checkout main
-    merge workflow-infra id: "7ac4ca6"
+    merge workflow-infra id: "m7ac4ca6"
     merge multi-role-pipeline id: "b26fcfa"
-    commit id: "a1cfec9" msg: "spec 004 voice-chat"
-    commit id: "7a9f156" tag: "004" msg: "frontend source"
+    commit id: "a1cfec9 spec-004"
+    commit id: "7a9f156 frontend" tag: "004"
     branch LiveCaption
-    commit id: "c01c6c6" msg: "LiveCaption"
+    commit id: "c01c6c6 LiveCaption"
     checkout main
-    merge LiveCaption id: "32d76ca" tag: "PR#7"
-    commit id: "7e7fca1" msg: "CDK S3 stack"
-    commit id: "2ac345c" msg: "LiveCaption frontend"
+    merge LiveCaption id: "32d76ca" tag: "PR7"
+    commit id: "7e7fca1 CDK-S3"
+    commit id: "2ac345c LiveCaption-FE"
     branch dispatch-plan
-    commit id: "df16329" msg: ".gitignore"
-    commit id: "db54eec" msg: "v2 dispatch + Wave 0"
-    commit id: "daf6f11" msg: "Wave 1-3 contracts"
+    commit id: "df16329 gitignore"
+    commit id: "db54eec v2-dispatch"
+    commit id: "daf6f11 Wave1-3"
     checkout main
-    merge dispatch-plan id: "53efaa4"
-    commit id: "5472eef" msg: "fix: offline notice"
-    commit id: "a4a6d19" msg: "lang + WebSocket"
-    commit id: "ef0019c" type: HIGHLIGHT msg: "EC2+CloudFront+Secrets"
-    commit id: "327631d" tag: "HEAD" msg: "daily-report skill"
-    branch voice-chat-care-record
-    commit id: "2ff1e35" type: HIGHLIGHT msg: "Voice chat WIP"
+    merge dispatch-plan id: "m53efaa4"
+    commit id: "5472eef offline-fix"
+    commit id: "a4a6d19 lang+WS"
+    commit id: "ef0019c EC2+CF" type: HIGHLIGHT
+    commit id: "327631d daily-report" tag: "HEAD"
+    branch voice-chat
+    commit id: "2ff1e35 VoiceChat-WIP" type: HIGHLIGHT
     checkout main
     branch caremate-ai
-    commit id: "f883073" msg: "CareMate AI"
+    commit id: "f883073 CareMate-AI"
 ```
 
 ## Project Structure
@@ -198,10 +197,10 @@ Spec source of truth: `specs/` + `.kiro/specs/`
 
 ```mermaid
 gitGraph
-    commit id: "ef0019c" msg: "EC2+CF+Secrets (prev)"
-    commit id: "327631d" tag: "HEAD" type: HIGHLIGHT msg: "daily-report skill"
-    branch 005-voice-chat-care-record
-    commit id: "2ff1e35" type: HIGHLIGHT msg: "Voice chat WIP"
+    commit id: "ef0019c EC2+CF+Secrets"
+    commit id: "327631d daily-report" tag: "HEAD" type: HIGHLIGHT
+    branch voice-chat
+    commit id: "2ff1e35 VoiceChat-WIP" type: HIGHLIGHT
 ```
 
 ### 🚧 進行中 (Doing)
@@ -254,44 +253,44 @@ gitGraph
 
 ```mermaid
 gitGraph
-    commit id: "d6eaf57" msg: "Initial commit"
-    commit id: "63f1d61" msg: "constitution"
-    commit id: "ffcf963" msg: "speckit + kiro"
-    commit id: "a608921" msg: "Add spec"
-    commit id: "c2436a9" tag: "PR#1" msg: "arch diagrams"
+    commit id: "d6eaf57 Initial-commit"
+    commit id: "63f1d61 constitution"
+    commit id: "ffcf963 speckit+kiro"
+    commit id: "a608921 Add-spec"
+    commit id: "c2436a9 arch-diagrams" tag: "PR1"
     branch role-setup
-    commit id: "16cee59" msg: "role + setup"
+    commit id: "16cee59 role+setup"
     checkout main
-    merge role-setup id: "98d1eb8" tag: "PR#2"
+    merge role-setup id: "98d1eb8" tag: "PR2"
     branch workflow-infra
-    commit id: "2a07d8f" msg: "workflow spec"
-    commit id: "028979b" msg: "contracts"
+    commit id: "2a07d8f workflow-spec"
+    commit id: "x028979b contracts"
     checkout main
     branch multi-role-pipeline
-    commit id: "f2f6b18" msg: "pipeline steering"
-    commit id: "fc899cc" msg: "git workflow"
+    commit id: "f2f6b18 pipeline"
+    commit id: "fc899cc git-workflow"
     checkout main
-    merge workflow-infra id: "7ac4ca6"
+    merge workflow-infra id: "m7ac4ca6"
     merge multi-role-pipeline id: "b26fcfa"
-    commit id: "a1cfec9" msg: "spec 004"
-    commit id: "7a9f156" tag: "004" msg: "frontend src"
+    commit id: "a1cfec9 spec-004"
+    commit id: "7a9f156 frontend" tag: "004"
     branch LiveCaption
-    commit id: "c01c6c6" msg: "LiveCaption"
+    commit id: "c01c6c6 LiveCaption"
     checkout main
-    merge LiveCaption id: "32d76ca" tag: "PR#7"
-    commit id: "7e7fca1" msg: "CDK S3"
-    commit id: "2ac345c" msg: "LiveCaption FE"
+    merge LiveCaption id: "32d76ca" tag: "PR7"
+    commit id: "7e7fca1 CDK-S3"
+    commit id: "2ac345c LiveCaption-FE"
     branch dispatch-plan
-    commit id: "df16329" msg: ".gitignore"
-    commit id: "db54eec" msg: "v2 dispatch"
-    commit id: "daf6f11" msg: "Wave 1-3"
+    commit id: "df16329 gitignore"
+    commit id: "db54eec v2-dispatch"
+    commit id: "daf6f11 Wave1-3"
     checkout main
-    merge dispatch-plan id: "53efaa4"
-    commit id: "5472eef" msg: "offline fix"
-    commit id: "a4a6d19" msg: "lang + WS"
-    commit id: "ef0019c" type: HIGHLIGHT msg: "EC2+CF+Secrets"
+    merge dispatch-plan id: "m53efaa4"
+    commit id: "5472eef offline-fix"
+    commit id: "a4a6d19 lang+WS"
+    commit id: "ef0019c EC2+CF" type: HIGHLIGHT
     branch caremate-ai
-    commit id: "f883073" msg: "CareMate AI"
+    commit id: "f883073 CareMate-AI"
 ```
 
 ### 🚧 進行中 (Doing)
