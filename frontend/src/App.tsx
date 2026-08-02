@@ -10,6 +10,7 @@ import { MemoryViewPage } from './pages/MemoryViewPage'
 import { VoiceChatPage } from './pages/VoiceChatPage'
 import ElderSelector from './components/ElderSelector'
 import { ELDER_PROFILES } from './data/mockElders'
+import { loadElderProfiles, seedDefaultElders } from './api/elderProfiles'
 import { type ConversationRecord } from './types/care'
 
 import { ElderSelectScreen } from './pages/ElderSelectScreen'
@@ -96,16 +97,36 @@ function App() {
   const [records, setRecords] = useState<ConversationRecord[]>([])
   const [historyPassphrase, setHistoryPassphrase] = useState('')
   const [configLoaded, setConfigLoaded] = useState(false)
+  const [elderProfiles, setElderProfiles] = useState(ELDER_PROFILES)
   const configurationIssues = configLoaded ? getConfigurationIssues() : []
 
-  const selectedElderProfile = ELDER_PROFILES.find(e => e.elder_id === elderId)
+  const selectedElderProfile = elderProfiles.find(e => e.elder_id === elderId) || ELDER_PROFILES.find(e => e.elder_id === elderId)
   const selectedElder = selectedElderProfile
     ? { id: selectedElderProfile.elder_id, displayName: selectedElderProfile.name }
     : undefined
-  const elders = ELDER_PROFILES.map(e => ({ id: e.elder_id, displayName: e.name }))
+  const elders = elderProfiles.map(e => ({ id: e.elder_id, displayName: e.name }))
+
+  // Load elder profiles from DynamoDB
+  const refreshElderProfiles = useCallback(async () => {
+    try {
+      let data = await loadElderProfiles()
+      if (data.length === 0) {
+        await seedDefaultElders(ELDER_PROFILES)
+        data = await loadElderProfiles()
+      }
+      if (data.length > 0) {
+        setElderProfiles(data.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW')))
+      }
+    } catch {
+      // Keep local fallback
+    }
+  }, [])
 
   useEffect(() => {
-    loadRemoteConfig().then(() => setConfigLoaded(true)).catch(() => setConfigLoaded(true))
+    loadRemoteConfig().then(() => {
+      setConfigLoaded(true)
+      refreshElderProfiles()
+    }).catch(() => setConfigLoaded(true))
   }, [])
 
   const handleConversationSaved = useCallback((record: ConversationRecord) => {
@@ -137,7 +158,7 @@ function App() {
               {selectedElderProfile && <p className="text-sm text-slate-500">{selectedElderProfile.name}</p>}
             </div>
             <div className="flex items-center gap-3">
-              <ElderSelector elderId={elderId} onElderChange={setElderId} compact />
+              <ElderSelector elderId={elderId} onElderChange={setElderId} compact elders={elderProfiles} />
               <nav className="flex gap-2">
                 <button
                   onClick={() => setElderPage('voice-chat')}
@@ -176,7 +197,7 @@ function App() {
               <p className="text-sm font-bold tracking-[0.18em] text-teal-700">CAREMATE AI</p>
               <p className="mt-0.5 text-xs text-slate-500">照護人員介面</p>
             </div>
-            <ElderSelector elderId={elderId} onElderChange={setElderId} compact />
+            <ElderSelector elderId={elderId} onElderChange={setElderId} compact elders={elderProfiles} />
           </div>
           <div className="flex items-center gap-2">
             <nav aria-label="主要導覽" className="flex flex-wrap gap-1.5">
@@ -218,7 +239,7 @@ function App() {
 
       <div>
         {caregiverPage === 'elders' && (
-          <ElderManagementPage elders={elders} onAdd={() => {}} onDelete={() => {}} onSelect={setElderId} selectedElderId={elderId} />
+          <ElderManagementPage elders={elders} onAdd={() => refreshElderProfiles()} onDelete={() => refreshElderProfiles()} onSelect={setElderId} selectedElderId={elderId} onProfilesLoaded={(profiles) => setElderProfiles(profiles)} />
         )}
         {caregiverPage === 'chat' && (
           <ChatPage elder={selectedElder} historyPassphrase={historyPassphrase} onConversationSaved={handleConversationSaved} onHistoryPassphraseChange={setHistoryPassphrase} />
