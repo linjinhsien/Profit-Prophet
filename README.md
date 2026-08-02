@@ -197,6 +197,14 @@ Spec source of truth: `specs/` + `.kiro/specs/`
 
 **變更統計**: 35 files changed, +3,434 insertions, -627 deletions
 
+```mermaid
+gitGraph
+    commit id: "ef0019c" msg: "EC2+CF+Secrets (prev)"
+    commit id: "327631d" tag: "HEAD" type: HIGHLIGHT msg: "daily-report skill"
+    branch 005-voice-chat-care-record
+    commit id: "2ff1e35" type: HIGHLIGHT msg: "Voice chat WIP"
+```
+
 ### 🚧 進行中 (Doing)
 
 - `005-voice-chat-care-record` — 語音聊天 + 照護紀錄前端元件
@@ -211,6 +219,94 @@ Spec source of truth: `specs/` + `.kiro/specs/`
 - 接續 005 分支，對接 EC2 backend (CloudFront + Secrets Manager)
 - Frontend 元件測試覆蓋率 ≥ 80%
 - 確認 CI workflow 運行結果
+
+---
+
+## 📅 Daily Report (2026-08-01)
+
+### ✅ 今日進度 (Done)
+
+**上午 — 專案初始化 + 多角色 Pipeline (09:30–13:00)**
+- [`d6eaf57`] Initial commit from Specify template
+- [`63f1d61`] docs: add hackathon environment constitution
+- [`ffcf963`] chore: add speckit and kiro configuration files
+- [`c2436a9`] [Spec Kit] Add architecture diagrams (PR #1)
+- [`16cee59`] [Spec Kit] Add project role and setup files (PR #2)
+- [`2a07d8f`] [Spec Kit] Add github-workflow-infrastructure specification
+- [`f2f6b18`] [Spec Kit] Implement multi-role pipeline steering pack (PR #5)
+- [`fc899cc`] [feat] Integrate original git workflow into multi-role pipeline (PR #6)
+
+**下午 — 前端開發 + v2 規劃 (14:00–18:00)**
+- [`a1cfec9`] [feat] Add spec for voice chat and care record feature
+- [`7a9f156`] [feat] Add frontend source code — chat UI, care record, voice input
+- [`c01c6c6`] LiveCaption (PR #7)
+- [`7e7fca1`] [feat] Add CDK stack for S3 static website deployment
+- [`2ac345c`] [feat] Integrate LiveCaption into frontend
+- [`db54eec`] [docs] Add v2 dispatch plan and Wave 0 task contracts
+- [`daf6f11`] [docs] Add Wave 1-3 task contracts (TASK-005 to TASK-009)
+- [`5472eef`] [fix] Show offline notice on LiveCaption page
+- [`a4a6d19`] feat: 語言選項只保留中英文，Transcribe 連線統一走 backend WebSocket
+
+**晚上 — EC2 Backend (21:00)**
+- [`ef0019c`] **[feat] EC2 backend + CloudFront routing + Secrets Manager integration**
+- [`f883073`] feat: 整合 CareMate AI 智慧長照陪伴系統
+
+**變更統計**: 33 commits, ~150 files changed, ~40,000+ insertions
+
+```mermaid
+gitGraph
+    commit id: "d6eaf57" msg: "Initial commit"
+    commit id: "63f1d61" msg: "constitution"
+    commit id: "ffcf963" msg: "speckit + kiro"
+    commit id: "a608921" msg: "Add spec"
+    commit id: "c2436a9" tag: "PR#1" msg: "arch diagrams"
+    branch 001-create-role-setup
+    commit id: "16cee59" msg: "role + setup"
+    checkout main
+    merge 001-create-role-setup id: "98d1eb8" tag: "PR#2"
+    branch 002-github-workflow-infrastructure
+    commit id: "2a07d8f" msg: "workflow spec"
+    commit id: "028979b" msg: "contracts"
+    checkout main
+    branch 003-multi-role-pipeline
+    commit id: "f2f6b18" msg: "pipeline steering"
+    commit id: "fc899cc" msg: "git workflow"
+    checkout main
+    merge 001-create-role-setup id: "089ced0"
+    merge 002-github-workflow-infrastructure id: "7ac4ca6"
+    merge 003-multi-role-pipeline id: "b26fcfa"
+    commit id: "a1cfec9" msg: "spec 004"
+    commit id: "7a9f156" tag: "004" msg: "frontend src"
+    branch LiveCaption
+    commit id: "c01c6c6" msg: "LiveCaption"
+    checkout main
+    merge LiveCaption id: "32d76ca" tag: "PR#7"
+    commit id: "7e7fca1" msg: "CDK S3"
+    commit id: "2ac345c" msg: "LiveCaption FE"
+    branch docs-v2-dispatch-plan
+    commit id: "df16329" msg: ".gitignore"
+    commit id: "db54eec" msg: "v2 dispatch"
+    commit id: "daf6f11" msg: "Wave 1-3"
+    checkout main
+    merge docs-v2-dispatch-plan id: "53efaa4"
+    commit id: "5472eef" msg: "offline fix"
+    commit id: "a4a6d19" msg: "語言 + WS"
+    commit id: "ef0019c" type: HIGHLIGHT msg: "EC2+CF+Secrets"
+    branch caremate-ai-integration
+    commit id: "f883073" msg: "CareMate AI"
+```
+
+### 🚧 進行中 (Doing)
+
+- `004-voice-chat-care-record` — 前端元件開發中
+- `caremate-ai-integration` — CareMate AI 整合
+- v2 dispatch plan — 9 個 Task Contracts 已定義
+
+### 🛑 Blockers
+
+- 無
+
+📁 完整日報檔案：[reports/daily-2026-08-01.md](reports/daily-2026-08-01.md) | [reports/daily-2026-08-02.md](reports/daily-2026-08-02.md)
 
 ## ⚠️ 安全性限制
 
