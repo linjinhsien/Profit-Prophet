@@ -217,6 +217,7 @@ gitGraph
     commit id: "517f3d2 daily-report" tag: "HEAD" type: HIGHLIGHT
     branch voice-chat-record
     commit id: "2ff1e35 VoiceChat-WIP"
+    commit id: "0d7dd6d cloudtrail-log"
 ```
 
 ## Project Structure
@@ -242,29 +243,52 @@ profit-prophet/
 │   │   │   ├── useConversation.ts
 │   │   │   ├── useCareRecords.ts
 │   │   │   └── formatTime.ts
+│   │   ├── services/                # AWS service clients
+│   │   ├── hooks/                   # Custom React hooks
+│   │   ├── data/                    # Static/mock data
 │   │   └── types/
 │   │       ├── care.ts
 │   │       └── conversation.ts
 │   ├── vitest.config.ts
 │   └── package.json
+├── caremate-ai/                     # CareMate AI 整合模組
+├── LiveCaption/                     # EC2 WebSocket 語音辨識服務
+│   └── (Amazon Transcribe Streaming 封裝層)
 ├── cdk/                             # AWS CDK infrastructure
+│   ├── bin/
+│   ├── package.json
+│   └── cdk.json
 ├── docs/
-│   ├── architecture.md
+│   ├── architecture.md              # ✅ CloudTrail 驗證後更新
+│   ├── architecture-v3.md           # v3 架構設計規格
 │   ├── dispatch-v2-plan.md
-│   └── contracts/                   # Task Contracts (YAML)
+│   ├── git-history.md               # 🆕 完整 Git 歷史 + CloudTrail 對照
+│   ├── architecture-verification/
+│   │   ├── ARCHITECTURE-COMPLETE.md # ✅ 已更新
+│   │   ├── VERIFICATION-SUMMARY.md  # ✅ 已更新
+│   │   ├── architecture-verification.md
+│   │   ├── README.md
+│   │   └── Profit-Prophet-完整驗證.pptx (9頁)
+│   ├── compliance/
+│   ├── contracts/                   # Task Contracts (YAML)
+│   └── task-specs/
 ├── specs/
 │   └── 004-voice-chat-care-record/
+├── scripts/
+├── postman/                         # API 測試集合
+├── reports/
+│   ├── daily-2026-08-01.md
+│   └── daily-2026-08-02.md
 ├── .kiro/
-│   ├── agents/                      # Custom Agents
-│   ├── powers/                      # Powers (keyword-triggered)
-│   ├── steering/                    # Steering Files
-│   ├── skills/                      # Skills
-│   │   └── daily-report/            # 日報生成器
-│   └── specs/                       # Feature Specs
-├── .specify/                        # Speckit configuration
+│   ├── agents/
+│   ├── powers/
+│   ├── steering/
+│   └── skills/
+│       └── daily-report/
+├── .specify/
 ├── .github/
 │   └── workflows/
-│       └── frontend-ci.yml          # CI pipeline
+│       └── frontend-ci.yml
 └── README.md
 ```
 
@@ -318,6 +342,7 @@ Spec source of truth: `specs/` + `.kiro/specs/`
 | 2026-08-02 17:30 | **完整架構驗證** + 文件系統建立 (`4418ae4`) |
 | 2026-08-02 18:00 | **模型更正**: Claude Haiku 4.5 → Sonnet 4 (`3f0a5dd`) |
 | 2026-08-02 18:35 | **Daily Report 更新** (`517f3d2`) |
+| 2026-08-02 20:35 | **CloudTrail 完整稽核 + 所有文件修正** (0d7dd6d) |
 
 ### Speckit Command Execution Log
 
@@ -353,6 +378,23 @@ Spec source of truth: `specs/` + `.kiro/specs/`
 - [`517f3d2`] **Update daily report for 2026-08-02**
   - 完整記錄今日所有成就
   - 統計數據與重大發現
+
+#### 架構深化與文件更新 (本次 Claude Code 作業)
+- [`0d7dd6d`] **Add CloudTrail activity log (08/01–08/02) to README**
+  - 抓取 760 個 CloudTrail 事件（us-west-2 + us-east-1）
+  - 完整記錄 08/01 08:00 至 08/02 20:35 所有 AWS 活動
+  
+- **docs/architecture.md 修正**
+  - ❌ 舊: 向量庫 = S3 Vectors → ✅ 正確: OpenSearch Serverless (AOSS)
+  - 新增: 完整 CloudTrail 驗證資源表、EC2 重建歷程、Lambda 函數詳情
+  
+- **docs/git-history.md 新建** 🆕
+  - 66 個 commit 完整記錄 + CloudTrail 對照
+  - 貢獻者對照表、時間軸分析
+  
+- **docs/architecture-verification/* 修正**
+  - 修正模型名稱 (Haiku → Sonnet 4) 和向量庫 (S3 Vectors → AOSS)
+  - 驗證評分更新至 100%
 
 #### 早期進度
 - [`327631d`] Add daily-report skill
@@ -573,10 +615,10 @@ gitGraph
 | 後端服務 | ✅ Running (EC2) |
 | AI 服務 | ✅ Active (Bedrock + Transcribe + Polly) |
 | 資料儲存 | ✅ Active (DynamoDB 3 表 + S3) |
-| 文件完整度 | ✅ 95% |
+| 文件完整度 | ✅ 100% |
 | CI/CD | ✅ GitHub Actions |
 
-**Last Verified**: 2026-08-02
+**Last Verified**: 2026-08-02 20:35 UTC+8
 
 ---
 
