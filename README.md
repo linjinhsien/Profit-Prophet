@@ -26,7 +26,7 @@ Board 上包含 v1（原設計）與 **v2（現行 24h MVP）** 兩組圖表：
 | Backend | EC2 (Node.js) + CloudFront routing |
 | Auth | Amazon Cognito Identity Pool（最小權限 IAM） |
 | 語音辨識 | Amazon Transcribe Streaming (zh-TW) |
-| 問答 + 分類 | Amazon Bedrock Knowledge Bases + Claude Haiku 4.5 |
+| 問答 + 分類 | Bedrock Knowledge Base (H4NWXXP6DZ) + Claude Sonnet 4 | ✅ Active |
 | 語音合成 | Amazon Polly (Zhiyu, Neural) |
 | 向量庫 | Amazon S3 Vectors |
 | 資料 | Amazon S3, Amazon DynamoDB |
@@ -135,7 +135,7 @@ profit-prophet/
 
 - 移除 API Gateway + Lambda：前端透過 Cognito 臨時憑證直接呼叫 AWS 服務
 - OpenSearch Serverless → **S3 Vectors**：成本降約 90%，無 collection 需管理
-- Claude 3 Sonnet → **Claude Haiku 4.5**
+- Claude 3 Sonnet → **Claude Sonnet 4**
 - 移除 Amazon Comprehend：Care Event 分類併入 Bedrock 的 structured output
 - 自建 RAG → **Bedrock Knowledge Bases** `RetrieveAndGenerate` 單一 API
 - 新增 EC2 backend + CloudFront routing（`ef0019c`）

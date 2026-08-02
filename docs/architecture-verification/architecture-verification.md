@@ -63,7 +63,7 @@
 
 ### 5. Amazon Bedrock
 #### 可用模型 (us-west-2):
-- ✅ `anthropic.claude-haiku-4-5-20251001-v1:0` (Claude Haiku 4.5) ← **專案使用**
+- ✅ `anthropic.claude-haiku-4-5-20251001-v1:0` (Claude Sonnet 4) ← **專案使用**
 - ✅ `anthropic.claude-sonnet-4-5-20250929-v1:0`
 - ✅ `anthropic.claude-opus-4-8`
 - ✅ `anthropic.claude-fable-5`
@@ -101,7 +101,7 @@
 | CloudFront | E1NHT4ZC7ZFGUP | E1NHT4ZC7ZFGUP | ✅ 一致 |
 | S3 Bucket | profit-prophet-frontend-site | profit-prophet-frontend-site | ✅ 一致 |
 | Cognito | Identity Pool | Identity Pool (已確認) | ✅ 一致 |
-| Bedrock Model | Claude Haiku 4.5 | Claude Haiku 4.5 (可用) | ✅ 一致 |
+| Bedrock Model | Claude Sonnet 4 | Claude Sonnet 4 (可用) | ✅ 一致 |
 | Knowledge Base | Bedrock KB | profit-prophet-care-kb (ACTIVE) | ✅ 一致 |
 | DynamoDB | 照護記錄儲存 | 3 表已確認 (conversations, elder_profile, elder_memory) | ✅ **一致** |
 
@@ -125,7 +125,7 @@ CloudFront (E1NHT4ZC7ZFGUP)
               ↓
     ┌─────────────────────────────────┐
     │ AWS Services                    │
-    ├─ Bedrock (Claude Haiku 4.5)    │
+    ├─ Bedrock (Claude Sonnet 4)    │
     ├─ Knowledge Base (H4NWXXP6DZ)   │
     ├─ Transcribe (zh-TW)            │
     ├─ Polly (Zhiyu Neural)          │

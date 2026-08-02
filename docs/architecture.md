@@ -10,7 +10,7 @@
 | 運算層 | API Gateway + Lambda | **無**（前端直呼 AWS SDK） | 少一層部署與除錯，24h 內最省時間 |
 | 向量庫 | OpenSearch Serverless | **S3 Vectors** | 2025/12 GA，成本降約 90%，無需管理 collection |
 | RAG | 自建（向量查詢 + 摘要分開） | **Bedrock Knowledge Bases** `RetrieveAndGenerate` | 一個 API 完成檢索與生成 |
-| LLM | Claude 3 Sonnet | **Claude Haiku 4.5** | Claude 3 已過時；Haiku 4.5 低延遲低成本，適合對話 |
+| LLM | Claude 3 Sonnet | **Claude Sonnet 4** | Claude 3 已過時；Sonnet 4 高性能推理，適合複雜對話與分類 |
 | 意圖分類 | Amazon Comprehend | **併入 Claude structured output** | 省一次網路往返與一個服務 |
 | 語音 | Transcribe + Polly（經 Lambda） | **Transcribe + Polly（前端直呼）** | 保留中文語音，但移除中介層 |
 | 憑證 | API Key | **Cognito Identity Pool + 最小權限 IAM** | 前端直呼 AWS 服務的唯一安全做法 |
@@ -40,7 +40,7 @@ graph TB
 
     subgraph AI["AI 服務層（前端直呼）"]
         TRANS[Amazon Transcribe<br/>Streaming zh-TW]
-        BR[Bedrock RetrieveAndGenerate<br/>Claude Haiku 4.5]
+        BR[Bedrock RetrieveAndGenerate<br/>Claude Sonnet 4]
         POLLY[Amazon Polly<br/>Zhiyu Neural]
     end
 
@@ -90,7 +90,7 @@ sequenceDiagram
     end
 
     B->>BR: RetrieveAndGenerate(查詢)
-    Note over BR: 向量檢索 + Claude Haiku 4.5<br/>同時輸出回應與 Care Event 分類
+    Note over BR: 向量檢索 + Claude Sonnet 4<br/>同時輸出回應與 Care Event 分類
     BR-->>B: { answer, category, confidence, citations }
 
     B->>P: SynthesizeSpeech(回應, Zhiyu)
@@ -106,7 +106,7 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    Q[照護人員查詢] --> BR[Bedrock RetrieveAndGenerate<br/>Claude Haiku 4.5]
+    Q[照護人員查詢] --> BR[Bedrock RetrieveAndGenerate<br/>Claude Sonnet 4]
     BR --> OUT[結構化輸出<br/>answer + category + confidence]
     OUT --> CHK{confidence >= 0.6?}
     CHK -->|Yes| CAT[採用分類]
@@ -131,7 +131,7 @@ Cognito Identity Pool 綁定的 role 僅允許下列動作，範圍鎖定到特�
 | `transcribe:StartStreamTranscription` | — |
 | `polly:SynthesizeSpeech` | — |
 | `bedrock:RetrieveAndGenerate` | 指定 Knowledge Base ID |
-| `bedrock:InvokeModel` | 僅 Claude Haiku 4.5 inference profile |
+| `bedrock:InvokeModel` | 僅 Claude Sonnet 4 inference profile |
 | `dynamodb:PutItem` / `Query` | 指定 table，並以 `dynamodb:LeadingKeys` 限制為呼叫者自己的 Cognito identity ID |
 
 ## 24 小時實作排程
@@ -164,7 +164,7 @@ Cognito Identity Pool 綁定的 role 僅允許下列動作，範圍鎖定到特�
 
 - **Frontend**: React + Vite + TypeScript, AWS SDK for JavaScript v3
 - **Auth**: Amazon Cognito Identity Pool
-- **AI**: Amazon Bedrock（Knowledge Bases + Claude Haiku 4.5）, Transcribe Streaming, Polly
+- **AI**: Amazon Bedrock（Knowledge Bases + Claude Sonnet 4）, Transcribe Streaming, Polly
 - **Data**: S3, S3 Vectors, DynamoDB
 - **Hosting**: AWS Amplify Hosting（或本機 `vite dev` 做 Demo）
 - **服務總數**: 6（Cognito, Bedrock, Transcribe, Polly, S3, DynamoDB）

@@ -97,7 +97,7 @@
 
 1. **24 小時 MVP**: 前端直連 AWS 服務，移除 API Gateway + Lambda 中介層
 2. **成本優化 90%**: 使用 S3 Vectors 取代 OpenSearch Serverless
-3. **AI 升級**: Claude Haiku 4.5 + Bedrock RetrieveAndGenerate
+3. **AI 升級**: Claude Sonnet 4 + Bedrock RetrieveAndGenerate
 4. **長照優化**: LiveCaption 多語言辨識 + 說話者分離
 
 ---

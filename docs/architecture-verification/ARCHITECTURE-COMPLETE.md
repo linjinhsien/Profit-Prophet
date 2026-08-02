@@ -15,7 +15,7 @@
 | 運算層 | API Gateway + Lambda | **前端直呼 AWS SDK** | 少一層部署與除錯，24h 最省時間 |
 | 向量庫 | OpenSearch Serverless | **S3 Vectors** | 成本降約 90%，無需管理 collection |
 | RAG | 自建 (向量查詢 + 摘要分開) | **Bedrock Knowledge Bases** | 一個 API 完成檢索與生成 |
-| LLM | Claude 3 Sonnet | **Claude Haiku 4.5** | 低延遲低成本，適合對話 |
+| LLM | Claude 3 Sonnet | **Claude Sonnet 4** | 高性能推理，適合複雜對話與分類 |
 | 意圖分類 | Amazon Comprehend | **併入 Claude structured output** | 省一次網路往返 |
 | 語音 | Transcribe + Polly (經 Lambda) | **Transcribe + Polly (前端直呼)** | 移除中介層 |
 | 憑證 | API Key | **Cognito Identity Pool + IAM** | 前端直呼 AWS 服務的安全做法 |
@@ -48,7 +48,7 @@ IAM Role (最小權限授予)
 │                                                    │
 │ 2️⃣ Bedrock RetrieveAndGenerate API               │
 │    ├─ Knowledge Base: H4NWXXP6DZ                  │
-│    ├─ Model: Claude Haiku 4.5                     │
+│    ├─ Model: Claude Sonnet 4                     │
 │    ├─ 一次 API 完成檢索 + 生成                     │
 │    └─ Structured output (照護事件分類)            │
 │                                                    │
@@ -136,7 +136,7 @@ async with recognizer:
   "AWS_REGION_NAME": "us-west-2",
   "BEDROCK_MODEL_ID": "us.anthropic.claude-sonnet-4-20250514-v1:0",
   "S3_AUDIO_BUCKET": "caremate-ai-audio-056724761684-us-west-2",
-  "BEDROCK_KB_ID": ""
+  "BEDROCK_KB_ID": "H4NWXXP6DZ"
 }
 ```
 
@@ -233,7 +233,7 @@ Amazon Nova 2 Sonic 是 **speech-to-speech** 模型，一個模型即可取代:
 **但**: Nova Sonic 目前僅支援英語、西班牙語、法語、義大利語、德語、葡萄牙語、印地語  
 **❌ 不支援中文**
 
-因此本專案維持 **Transcribe (zh-TW) + Claude Haiku 4.5 + Polly (Zhiyu)** 組合。
+因此本專案維持 **Transcribe (zh-TW) + Claude Sonnet 4 + Polly (Zhiyu)** 組合。
 
 參考: [Amazon Nova speech models](https://aws.amazon.com/ai/generative-ai/nova/speech/)
 
@@ -248,7 +248,7 @@ Amazon Nova 2 Sonic 是 **speech-to-speech** 模型，一個模型即可取代:
 | EC2 後端 | ✅ | t3.micro (LiveCaption WebSocket) |
 | Cognito | ✅ | Identity Pool 已配置 |
 | Transcribe | ✅ | Streaming zh-TW (LiveCaption 封裝) |
-| Bedrock KB | ✅ | H4NWXXP6DZ, Claude Haiku 4.5 |
+| Bedrock KB | ✅ | H4NWXXP6DZ, Claude Sonnet 4 |
 | Polly | ✅ | Zhiyu Neural (前端直呼) |
 | DynamoDB | ✅ | 3 表已確認 |
 | Lambda 函數 | ✅ | 5 個 caremate-ai 函數 |
@@ -279,7 +279,7 @@ Amazon Nova 2 Sonic 是 **speech-to-speech** 模型，一個模型即可取代:
 ### AI/ML 服務
 - Amazon Transcribe Streaming (語音識別)
 - Amazon Bedrock Knowledge Bases (RAG)
-- Claude Haiku 4.5 (LLM)
+- Claude Sonnet 4 (LLM)
 - Amazon Polly Neural (語音合成)
 
 ### 資料 & 認證

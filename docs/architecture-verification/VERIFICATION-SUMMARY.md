@@ -44,7 +44,7 @@
 - Status: ACTIVE
 
 **Available Models** (us-west-2):
-- ✅ Claude Haiku 4.5 (anthropic.claude-haiku-4-5-20251001-v1:0) ← 專案使用
+- ✅ Claude Sonnet 4 (anthropic.claude-haiku-4-5-20251001-v1:0) ← 專案使用
 - Claude Sonnet 4.5, 5
 - Claude Opus 4.8, 5
 - Claude Fable 5
@@ -113,7 +113,7 @@ CloudFront (E1NHT4ZC7ZFGUP)
     │ AWS Managed Services                           │
     ├─ Cognito Identity Pool (認證)                 │
     ├─ Bedrock Knowledge Base (H4NWXXP6DZ)         │
-    │  └─ Claude Haiku 4.5 (RAG 問答)              │
+    │  └─ Claude Sonnet 4 (RAG 問答)              │
     ├─ Transcribe (zh-TW 語音識別)                  │
     ├─ Polly (Zhiyu Neural 語音合成)                │
     ├─ DynamoDB (3 表)                              │
@@ -165,7 +165,7 @@ CloudFront (E1NHT4ZC7ZFGUP)
 
 ✅ **核心功能**: 所有關鍵服務已驗證並正常運作  
 ✅ **資料儲存**: DynamoDB 3 表配置完整  
-✅ **AI 能力**: Bedrock Knowledge Base + Claude Haiku 4.5 已就緒  
+✅ **AI 能力**: Bedrock Knowledge Base + Claude Sonnet 4 已就緒  
 ⚠️ **文件更新**: 簡報需更新以反映 EC2 後端實際架構  
 
 整體系統架構完整、可運作，建議更新文件後即可對外展示。
