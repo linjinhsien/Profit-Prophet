@@ -5,7 +5,7 @@ AI 驅動的照護人員語音助理。照護人員用中文語音或文字提�
 > **目前版本**：v2 — 24 小時 MVP，無後端運算層（前端直呼 AWS 服務）
 
 **Branch**: `master` | **Started**: 2026-08-01 | **Last updated**: 2026-08-02  
-**Architecture Verification**: ✅ 95% Complete | [📊 View Report](docs/architecture-verification/)
+**Architecture Verification**: ✅ 95% Complete | [📊 View Report](docs/architecture-verification/) | [📽️ PowerPoint](docs/architecture-verification/Profit-Prophet-完整驗證.pptx)
 
 ## 架構圖
 
@@ -18,6 +18,22 @@ Board 上包含 v1（原設計）與 **v2（現行 24h MVP）** 兩組圖表：
 - v2 Care Event 分類（合併至單一 Bedrock 呼叫）
 
 完整架構說明、IAM 權限範圍與 24 小時排程請見 [docs/architecture.md](docs/architecture.md)。
+
+### 📽️ 架構驗證簡報
+
+**[Profit-Prophet 完整驗證簡報 (PowerPoint, 8頁)](docs/architecture-verification/Profit-Prophet-完整驗證.pptx)** ⭐
+
+簡報內容：
+1. 專案簡介與驗證概述
+2. 完整驗證結果 (10+ AWS 服務)
+3. 實際架構圖 (已驗證)
+4. LiveCaption 語音辨識層
+5. v1 → v2 架構演進
+6. 為什麼不用 Amazon Nova Sonic?
+7. 技術棧總覽
+8. 結論與建議
+
+**驗證日期**: 2026-08-02 | **驗證評分**: 95% ✅
 
 ## 技術棧
 
@@ -402,9 +418,11 @@ gitGraph
 ### 文件資源
 - **完整架構說明**: [docs/architecture.md](docs/architecture.md)
 - **架構驗證報告**: [docs/architecture-verification/](docs/architecture-verification/)
-  - [完整架構分析](docs/architecture-verification/ARCHITECTURE-COMPLETE.md)
-  - [驗證總結](docs/architecture-verification/VERIFICATION-SUMMARY.md)
-  - [PowerPoint 簡報](docs/architecture-verification/Profit-Prophet-完整驗證.pptx)
+  - 📊 [完整架構分析](docs/architecture-verification/ARCHITECTURE-COMPLETE.md) (11 KB)
+  - 📋 [驗證總結](docs/architecture-verification/VERIFICATION-SUMMARY.md) (5.3 KB)
+  - 📄 [詳細驗證報告](docs/architecture-verification/architecture-verification.md) (6.7 KB)
+  - 🎯 [文件導覽](docs/architecture-verification/README.md)
+  - 📽️ **[PowerPoint 簡報 (8頁)](docs/architecture-verification/Profit-Prophet-完整驗證.pptx)** ⭐
 - **v2 部署計畫**: [docs/dispatch-v2-plan.md](docs/dispatch-v2-plan.md)
 - **Daily Reports**: [reports/](reports/)
 
