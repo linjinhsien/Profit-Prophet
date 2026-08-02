@@ -5,7 +5,121 @@ AI 驅動的照護人員語音助理。照護人員用中文語音或文字提�
 > **目前版本**：v2 — 24 小時 MVP，無後端運算層（前端直呼 AWS 服務）
 
 **Branch**: `master` | **Started**: 2026-08-01 | **Last updated**: 2026-08-02  
-**Architecture Verification**: ✅ 95% Complete | [📊 View Report](docs/architecture-verification/) | [📽️ PowerPoint](docs/architecture-verification/Profit-Prophet-完整驗證.pptx)
+**Architecture Verification**: ✅ 95% Complete | [📊 View Report](docs/architecture-verification/) | [📽️ PowerPoint](docs/architecture-verification/Profit-Prophet-完整驗證.pptx)  
+**Live Demo**: 🌐 https://d1qintm5rk17ye.cloudfront.net
+
+---
+
+## 🚀 開發工作流程
+
+本專案採用 **AI 輔助開發工作流程**，整合 **Kiro**、**Speckit** 與 **GitHub** 三大工具，實現從規格到部署的全自動化流程。
+
+### 🤖 Kiro - AI 開發代理
+
+[Kiro](https://github.com/kiro-sh/kiro) 是本專案的主要 AI 開發代理，負責執行 Speckit 命令並管理開發流程。
+
+**核心功能**：
+- 🎯 **Agents**: 自定義 AI 代理（如架構師、測試工程師）
+- ⚡ **Powers**: 關鍵字觸發的自動化任務
+- 🧭 **Steering**: 角色導向的工作指引
+- 🛠️ **Skills**: 可重複使用的技能模組（如 daily-report）
+
+**配置位置**: `.kiro/`
+```
+.kiro/
+├── agents/          # 自定義代理
+├── powers/          # 自動化觸發器
+├── steering/        # 角色指引
+└── skills/          # 技能模組
+    └── daily-report/  # 日報生成器
+```
+
+### 📋 Speckit - AI 輔助規格管理
+
+[Speckit](https://github.com/speckit/speckit) 提供結構化的需求管理與任務生成工具。
+
+**工作流程命令**：
+
+| 命令 | 功能 | 使用時機 |
+|------|------|---------|
+| `speckit.specify` | 建立或更新 feature spec | 新功能規劃 |
+| `speckit.plan` | 生成實作計畫 | 確定技術方案 |
+| `speckit.tasks` | 生成依賴排序的任務清單 | 分解實作步驟 |
+| `speckit.implement` | 執行任務 | 開始編碼 |
+| `speckit.analyze` | 跨 artifact 一致性檢查 | 驗證完整性 |
+| `speckit.checklist` | 需求品質檢查 | 審查規格 |
+| `speckit.daily-report` | 生成每日進度報告 | 每日結束時 |
+| `speckit.git.feature` | 建立 feature branch | 開始新功能 |
+
+**配置位置**: `.specify/` + `specs/`
+
+### 🔀 GitHub 工作流程
+
+**分支策略**：
+```
+master (主分支)
+  ├── feature/001-xxx (功能分支，自動編號)
+  ├── feature/002-xxx
+  └── docs/xxx (文件分支)
+```
+
+**Pull Request 流程**：
+1. Feature branch 開發
+2. GitHub Actions CI 自動檢查
+3. Code review
+4. Merge 到 master
+
+**CI/CD Pipeline** (`.github/workflows/frontend-ci.yml`):
+- ✅ 依賴安裝 (`npm ci`)
+- ✅ 型別檢查 (`tsc --noEmit`)
+- ✅ 單元測試 (`vitest`)
+- ✅ 建置驗證 (`npm run build`)
+
+### 📊 完整開發流程範例
+
+```mermaid
+graph LR
+    A[需求討論] --> B[speckit.specify]
+    B --> C[feature spec]
+    C --> D[speckit.plan]
+    D --> E[實作計畫]
+    E --> F[speckit.tasks]
+    F --> G[任務清單]
+    G --> H[speckit.git.feature]
+    H --> I[建立分支]
+    I --> J[speckit.implement]
+    J --> K[編碼 + 測試]
+    K --> L[GitHub Actions CI]
+    L --> M{CI Pass?}
+    M -->|Yes| N[Pull Request]
+    M -->|No| K
+    N --> O[Code Review]
+    O --> P[Merge to master]
+    P --> Q[speckit.daily-report]
+```
+
+### 🎯 實際執行記錄 (2026-08-01/02)
+
+| Date | Agent | Command | 成果 |
+|------|-------|---------|------|
+| 08-01 | kiro | `speckit.specify` | 初始化 Profit-Prophet spec |
+| 08-01 | kiro | `speckit.git.feature` | 建立 001, 002, 003 分支 |
+| 08-01 | kiro | `speckit.implement` | 實作多角色 pipeline |
+| 08-01 | kiro | `speckit.specify` | 建立 004-voice-chat spec |
+| 08-02 | kiro | `speckit.git.feature` | 建立 005 分支 |
+| 08-02 | kiro | `speckit.daily-report` | 生成每日報告 |
+| 08-02 | claude-code | Architecture Verification | 驗證 10+ AWS 服務 |
+| 08-02 | claude-code | Documentation | 生成 5 份文件 + PPT |
+
+### 🔗 相關資源
+
+- **Kiro**: https://github.com/kiro-sh/kiro
+- **Speckit**: https://github.com/speckit/speckit
+- **Specs 目錄**: [specs/](specs/)
+- **Kiro 配置**: [.kiro/](.kiro/)
+- **Daily Reports**: [reports/](reports/)
+
+---
 
 ## 架構圖
 
