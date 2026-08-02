@@ -17,7 +17,7 @@
 
 ### 為什麼不用 Nova Sonic
 
-Amazon Nova 2 Sonic 是 speech-to-speech 模型，一個模型即可取代 Transcribe + Comprehend + Claude + Polly，是最理想的簡化路線。但它目前僅支援英語、西班牙語、法語、義大利語、德語、葡萄牙語、印地語，**不支援中文**，因此本專案仍維持 Transcribe + Polly 的組合。
+Amazon Nova 2 Sonic 是 speech-to-speech 模型，一個模型即可取代 Transcribe + Comprehend + Claude + Polly，是最理想的簡化路線。Nova Sonic **支援中文**，但語音帶有明顯 **ABC 腔調**（美式華語），不適合台灣長照現場（長者與照服員主要使用台灣國語與台語）。因此本專案維持 **Transcribe (zh-TW) + Polly (Zhiyu Neural)** 組合，提供更自然的台灣中文語音。
 
 參考：[Amazon Nova speech models](https://aws.amazon.com/ai/generative-ai/nova/speech/)（內容已改寫以符合授權規範）
 

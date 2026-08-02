@@ -230,10 +230,12 @@ Amazon Nova 2 Sonic 是 **speech-to-speech** 模型，一個模型即可取代:
 - Claude (理解與生成)
 - Polly (文字→語音)
 
-**但**: Nova Sonic 目前僅支援英語、西班牙語、法語、義大利語、德語、葡萄牙語、印地語  
-**❌ 不支援中文**
+**Nova Sonic 確實支援中文**，但有以下問題：
+- ⚠️ **ABC 腔調**: 語音帶有明顯美式華語腔調
+- ⚠️ **不適合台灣長照**: 長者與照服員主要使用台灣國語與台語
+- ⚠️ **語音自然度**: 對台灣使用者而言不夠自然
 
-因此本專案維持 **Transcribe (zh-TW) + Claude Sonnet 4 + Polly (Zhiyu)** 組合。
+因此本專案維持 **Transcribe (zh-TW) + Claude Sonnet 4 + Polly (Zhiyu Neural)** 組合，提供更符合台灣使用情境的語音體驗。
 
 參考: [Amazon Nova speech models](https://aws.amazon.com/ai/generative-ai/nova/speech/)
 
